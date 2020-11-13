@@ -12,7 +12,10 @@
  
 ![gameplay](https://user-images.githubusercontent.com/22287151/99044920-e24daa80-25d3-11eb-8dec-b6b98fc550f0.PNG)
 # 시연 영상
-유투브 URL
+* 졸업작품 초기영상
+
+* 졸업작품 최종영상
+https://www.youtube.com/watch?v=Cb9lzyPxx80
 
 # 구현기능
 * 비동기 I/O 입출력

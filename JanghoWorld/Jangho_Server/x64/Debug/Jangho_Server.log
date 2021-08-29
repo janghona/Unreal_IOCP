@@ -1,0 +1,16 @@
+﻿  IOCompletionPort.cpp
+d:\unreal_iocp\janghoworld\jangho_server\iocompletionport.cpp(108): warning C4311: '형식 캐스트': 'stSOCKETINFO *'에서 'DWORD'(으)로 포인터가 잘립니다.
+d:\unreal_iocp\janghoworld\jangho_server\iocompletionport.cpp(108): warning C4302: '형식 캐스트': 'stSOCKETINFO *'에서 'DWORD'(으)로 잘립니다.
+d:\unreal_iocp\janghoworld\jangho_server\iocompletionport.cpp(121): warning C4477: 'printf_s' : 서식 문자열 '%d'에 'int' 형식의 인수가 필요하지만 variadic 인수 1의 형식이 'SOCKET'입니다.
+  d:\unreal_iocp\janghoworld\jangho_server\iocompletionport.cpp(121): note: 서식 문자열에서 '%lld'을(를) 사용하는 것이 좋습니다.
+  d:\unreal_iocp\janghoworld\jangho_server\iocompletionport.cpp(121): note: 서식 문자열에서 '%Id'을(를) 사용하는 것이 좋습니다.
+  d:\unreal_iocp\janghoworld\jangho_server\iocompletionport.cpp(121): note: 서식 문자열에서 '%I64d'을(를) 사용하는 것이 좋습니다.
+d:\unreal_iocp\janghoworld\jangho_server\iocompletionport.cpp(182): warning C4477: 'printf_s' : 서식 문자열 '%d'에 'int' 형식의 인수가 필요하지만 variadic 인수 1의 형식이 'SOCKET'입니다.
+  d:\unreal_iocp\janghoworld\jangho_server\iocompletionport.cpp(182): note: 서식 문자열에서 '%lld'을(를) 사용하는 것이 좋습니다.
+  d:\unreal_iocp\janghoworld\jangho_server\iocompletionport.cpp(182): note: 서식 문자열에서 '%Id'을(를) 사용하는 것이 좋습니다.
+  d:\unreal_iocp\janghoworld\jangho_server\iocompletionport.cpp(182): note: 서식 문자열에서 '%I64d'을(를) 사용하는 것이 좋습니다.
+d:\unreal_iocp\janghoworld\jangho_server\iocompletionport.cpp(212): warning C4474: 'printf_s' : 서식 문자열에 전달된 인수가 너무 많습니다.
+  d:\unreal_iocp\janghoworld\jangho_server\iocompletionport.cpp(212): note: 자리 표시자 및 해당 매개 변수에는 variadic 인수가 0개 필요하지만 1개가 제공되었습니다.
+d:\unreal_iocp\janghoworld\jangho_server\iocompletionport.cpp(240): warning C4474: 'printf_s' : 서식 문자열에 전달된 인수가 너무 많습니다.
+  d:\unreal_iocp\janghoworld\jangho_server\iocompletionport.cpp(240): note: 자리 표시자 및 해당 매개 변수에는 variadic 인수가 0개 필요하지만 1개가 제공되었습니다.
+  Jangho_Server.vcxproj -> D:\Unreal_IOCP\JanghoWorld\Jangho_Server\x64\Debug\Jangho_Server.exe

@@ -6,6 +6,12 @@
 #define	MAX_BUFFER		1024
 #define SERVER_PORT		8000
 
+struct location {
+	float x;
+	float y;
+	float z;
+};
+
 struct stSOCKETINFO{
 	WSAOVERLAPPED	overlapped;
 	WSABUF			dataBuf;

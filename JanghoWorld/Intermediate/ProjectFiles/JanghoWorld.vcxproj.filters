@@ -54,4 +54,14 @@
       <Filter>Source\JanghoWorld</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\Source\JanghoWorld\ClientSocket.cpp">
+      <Filter>Source\JanghoWorld</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Source\JanghoWorld\ClientSocket.h">
+      <Filter>Source\JanghoWorld</Filter>
+    </ClInclude>
+  </ItemGroup>
 </Project>

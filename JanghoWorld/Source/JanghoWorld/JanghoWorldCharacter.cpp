@@ -45,6 +45,13 @@ AJanghoWorldCharacter::AJanghoWorldCharacter()
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
+
+	// client 소켓 연결
+	Socket.InitSocket();
+	bIsConnected = Socket.Connect("127.0.0.1", 8000);
+	if (bIsConnected){
+		UE_LOG(LogClass, Log, TEXT("IOCP Server connect success!"));
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -130,5 +137,18 @@ void AJanghoWorldCharacter::MoveRight(float Value)
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 		// add movement in that direction
 		AddMovementInput(Direction, Value);
+	}
+}
+
+void AJanghoWorldCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	// UE_LOG(LogClass, Log, TEXT("asd"));
+	if (bIsConnected)
+	{
+		auto MyLocation = GetActorLocation();
+		// UE_LOG(LogClass, Log, TEXT("%s %s %s"), MyLocation.X, MyLocation.Y, MyLocation.ZeroVector);
+		Socket.SendMyLocation(MyLocation);
 	}
 }

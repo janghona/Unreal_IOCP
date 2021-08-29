@@ -118,6 +118,8 @@ void IOCompletionPort::StartServer(){
 			NULL
 		);
 
+		printf_s("[INFO] 클라이언트 접속 / 아이디 : %d \n", clientSocket);
+
 		if (nResult == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING){
 			printf_s("[ERROR] IO Pending 실패 : %d", WSAGetLastError());
 			return;
@@ -191,8 +193,9 @@ void IOCompletionPort::WorkerThread(){
 			continue;
 		}
 		else{
-			printf_s("[INFO] 메시지 수신- Bytes : [%d], Msg : [%s]\n",
-				pSocketInfo->dataBuf.len, pSocketInfo->dataBuf.buf);
+			location loc = *(location*)pSocketInfo->dataBuf.buf;
+			printf_s("[INFO] 위치 수신 - X : [%f], Y : [%f], Z : [%f]\n",
+				loc.x, loc.y, loc.z);
 
 			// 클라이언트의 응답을 그대로 송신			
 			nResult = WSASend(
@@ -209,8 +212,8 @@ void IOCompletionPort::WorkerThread(){
 				printf_s("[ERROR] WSASend 실패 : ", WSAGetLastError());
 			}
 
-			printf_s("[INFO] 메시지 송신 - Bytes : [%d], Msg : [%s]\n",
-				pSocketInfo->dataBuf.len, pSocketInfo->dataBuf.buf);
+		//	printf_s("[INFO] 메시지 송신 - Bytes : [%d], Msg : [%s]\n",
+			//	pSocketInfo->dataBuf.len, pSocketInfo->dataBuf.buf);
 
 			// stSOCKETINFO 데이터 초기화
 			ZeroMemory(&(pSocketInfo->overlapped), sizeof(OVERLAPPED));

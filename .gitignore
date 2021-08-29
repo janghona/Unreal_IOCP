@@ -1,6 +1,6 @@
-/JanghoWorld/.vs
-/JanghoWorld/Saved
-/JanghoWorld/Intermediate
-/JanghoWorld/Build
+JanghoWorld/.vs/*
+JanghoWorld/Saved/*
+JanghoWorld/Intermediate/*
+JanghoWorld/Build/*
 *_BuiltData.uasset
 *.sln

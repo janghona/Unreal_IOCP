@@ -42,16 +42,28 @@ bool ClientSocket::Connect(const char * pszIP, int nPort){
 	return true;
 }
 
-void ClientSocket::SendMyLocation(const FVector& ActorLocation){
+int ClientSocket::SendMyLocation(const int& SessionId, const FVector& ActorLocation){
 	location loc;
 	loc.x = ActorLocation.X;
 	loc.y = ActorLocation.Y;
 	loc.z = ActorLocation.Z;
 
-	int nSendLen = send(m_Socket, (CHAR*)&loc, sizeof(location), 0);
+	CharacterInfo info;
+	info.SessionId = SessionId;
+	info.loc = loc;
+	CharactersInfo* ci;
 
+	int nSendLen = send(m_Socket, (CHAR*)&info, sizeof(CharacterInfo), 0);
 	if (nSendLen == -1) {
-		// std::cout << "Error : " << WSAGetLastError() << std::endl;
-		// return FVector();
+		return -1;
 	}
+
+	int nRecvLen = recv(m_Socket, (CHAR*)&recvBuffer, 1024, 0);
+	if (nRecvLen == -1) {
+		return -1;
+	}
+	else {
+		ci = (CharactersInfo*)&recvBuffer;
+	}
+	return ci->m.size();
 }

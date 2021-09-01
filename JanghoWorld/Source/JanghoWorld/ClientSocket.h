@@ -7,6 +7,8 @@
 // winsock2 사용을 위해 아래 코멘트 추가
 #pragma comment(lib, "ws2_32.lib")
 #include <WinSock2.h>
+#include<map>
+using namespace std;
 
 #define	MAX_BUFFER		1024
 #define SERVER_PORT		8000
@@ -27,6 +29,15 @@ struct location {
 	float z;
 };
 
+struct CharacterInfo{
+	int			SessionId;
+	location	loc;
+};
+
+struct CharactersInfo{
+	std::map<int, location> m;
+};
+
 class JANGHOWORLD_API ClientSocket{
 public:
 	ClientSocket();
@@ -34,8 +45,9 @@ public:
 
 	bool InitSocket();
 	bool Connect(const char* pszIP, int nPort);
-	void SendMyLocation(const FVector& ActorLocation);
+	int SendMyLocation(const int& SessionId, const FVector& ActorLocation);
 
 private:
 	SOCKET m_Socket;
+	char* recvBuffer;
 };

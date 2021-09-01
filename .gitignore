@@ -3,5 +3,7 @@ JanghoWorld/Saved/*
 JanghoWorld/Intermediate/*
 JanghoWorld/Build/*
 JanghoWorld/Binaries/*
+JanghoWorld/Jangho_Server/.vs/*
+JanghoWorld/Jangho_Server/x64/*
 *_BuiltData.uasset
 *.sln

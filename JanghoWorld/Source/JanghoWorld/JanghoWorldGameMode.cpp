@@ -10,13 +10,15 @@ AJanghoWorldGameMode::AJanghoWorldGameMode()
 {
 	// set default pawn class to our Blueprinted character
 	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/ThirdPersonCPP/Blueprints/ThirdPersonCharacter"));
-	if (PlayerPawnBPClass.Class != NULL)
-	{
+	if (PlayerPawnBPClass.Class != NULL){
 		DefaultPawnClass = PlayerPawnBPClass.Class;
 	}
 
 	// 아래 코드가 있어야 캐릭터 액터의 tick 이 활성화 된다
 	PrimaryActorTick.bCanEverTick = true;
+
+	//세션 아이디
+	SessionId = FMath::RandRange(0,100);
 
 	// server 소켓 연결
 	Socket.InitSocket();
@@ -31,21 +33,27 @@ void AJanghoWorldGameMode::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	if (!bIsConnected) return;
+
 	auto Player = Cast<AJanghoWorldCharacter>(UGameplayStatics::GetPlayerPawn(this, 0));
-		auto MyLocation = Player->GetActorLocation();
-		Socket.SendMyLocation(MyLocation);
+	if (!Player) return;
 
-		TArray<AActor*> SpawnedCharacters;
-		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AJanghoWorldCharacter::StaticClass(), SpawnedCharacters);
+	auto MyLocation = Player->GetActorLocation();
+	auto MyRotation = Player->GetActorRotation();
 
-		auto DummyLocation = MyLocation;
-		DummyLocation.X += 100;
-		DummyLocation.Y += 100;
+	Socket.SendMyLocation(SessionId,MyLocation);
+	
+	//월드 내 캐릭터들 수집
+	TArray<AActor*> SpawnedCharacters;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AJanghoWorldCharacter::StaticClass(), SpawnedCharacters);
 
-		for (auto CharacterIter : SpawnedCharacters) {
+	auto DummyLocation = MyLocation;
+	DummyLocation.X += 100;
+	DummyLocation.Y += 100;
+
+	for (auto CharacterIter : SpawnedCharacters){
 			auto Character = Cast<AJanghoWorldCharacter>(CharacterIter);
 			Character->SetActorLocation(DummyLocation);
-		}
+	}
 	
 }
 

@@ -193,9 +193,9 @@ void IOCompletionPort::WorkerThread(){
 			continue;
 		}
 		else{
-			location loc = *(location*)pSocketInfo->dataBuf.buf;
-			printf_s("[INFO] 위치 수신 - X : [%f], Y : [%f], Z : [%f]\n",
-				loc.x, loc.y, loc.z);
+			CharacterInfo* info = (CharacterInfo*)pSocketInfo->dataBuf.buf;
+			printf_s("[클라이언트 ID : %d] 위치 수신 - X : [%f], Y : [%f], Z : [%f]\n",
+				info->SessionId,info->loc.x, info->loc.y, info->loc.z);
 
 			// 클라이언트의 응답을 그대로 송신			
 			nResult = WSASend(

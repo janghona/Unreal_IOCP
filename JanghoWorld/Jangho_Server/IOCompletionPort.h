@@ -2,6 +2,8 @@
 // winsock2 사용을 위해 아래 코멘트 추가
 #pragma comment(lib, "ws2_32.lib")
 #include <WinSock2.h>
+#include<map>
+using namespace std;
 
 #define	MAX_BUFFER		1024
 #define SERVER_PORT		8000
@@ -10,6 +12,15 @@ struct location {
 	float x;
 	float y;
 	float z;
+};
+
+struct CharacterInfo{
+	int			SessionId;
+	location	loc;
+};
+
+struct CharactersInfo{
+	std::map<int, location> m;
 };
 
 struct stSOCKETINFO{
@@ -42,4 +53,5 @@ private:
 	bool			m_bAccept;			// 요청 동작 플래그
 	bool			m_bWorkerThread;	// 작업 스레드 동작 플래그
 	HANDLE *		m_pWorkerHandle;	// 작업 스레드 핸들
+	CharactersInfo WorldCharacterInfo;  // 접속한 모든 클라이언트 정보 저장 (sessionid, loc)
 };

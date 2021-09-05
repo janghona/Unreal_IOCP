@@ -1,6 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 #include "ClientSocket.h"
-
+#include <sstream>
 ClientSocket::ClientSocket(){}
 
 ClientSocket::~ClientSocket(){
@@ -30,9 +30,8 @@ bool ClientSocket::InitSocket(){
 bool ClientSocket::Connect(const char * pszIP, int nPort){
 	// 접속할 서버 정보를 저장할 구조체
 	SOCKADDR_IN stServerAddr;
-
-	stServerAddr.sin_family = AF_INET;
 	// 접속할 서버 포트 및 IP
+	stServerAddr.sin_family = AF_INET;
 	stServerAddr.sin_port = htons(nPort);
 	stServerAddr.sin_addr.s_addr = inet_addr(pszIP);
 
@@ -45,29 +44,34 @@ bool ClientSocket::Connect(const char * pszIP, int nPort){
 	return true;
 }
 
-CharactersInfo* ClientSocket::SendMyLocation(const int& SessionId, const FVector& ActorLocation) {
-	location loc;
+int ClientSocket::SendMyLocation(const int& SessionId, const FVector& ActorLocation) {
+	Location loc;
+	loc.SessionId = SessionId;
 	loc.x = ActorLocation.X;
 	loc.y = ActorLocation.Y;
 	loc.z = ActorLocation.Z;
 
-	CharacterInfo info;
-	info.SessionId = SessionId;
-	info.loc = loc;
-	CharactersInfo* ci;
-
-	int nSendLen = send(m_Socket, (CHAR*)&info, sizeof(CharacterInfo), 0);
+	int nSendLen = send(m_Socket, (CHAR*)&loc, sizeof(Location), 0);
 	if (nSendLen == -1) {
-		return nullptr;
+		return -1;
 	}
 
 	int nRecvLen = recv(m_Socket, (CHAR*)&recvBuffer, MAX_BUFFER, 0);
 	if (nRecvLen == -1) {
-		return nullptr;
+		return -1;
 	}
 	else {
-		ci = (CharactersInfo*)&recvBuffer;
+		// 역직렬화
+		stringstream OutputStream;
+		OutputStream << recvBuffer;
+		OutputStream >> CharactersInfo;
+
+		for (int i = 0; i < MAX_CLIENTS; i++) {
+			int ssID = CharactersInfo.WorldCharacterInfo[i].SessionId;
+			if (ssID != -1) {
+				return CharactersInfo.WorldCharacterInfo[i].x;
+			}
+		}
+		return -1;
 	}
-	ci->ciMap.at(0);
-	return ci;
 }

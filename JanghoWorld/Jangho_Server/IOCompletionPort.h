@@ -3,24 +3,67 @@
 #pragma comment(lib, "ws2_32.lib")
 #include <WinSock2.h>
 #include<map>
+#include<iostream>
 using namespace std;
 
 #define	MAX_BUFFER		1024
 #define SERVER_PORT		8000
+#define MAX_CLIENTS		100
 
-struct location {
-	float x;
-	float y;
-	float z;
+class Location {
+public:
+	Location() {};
+	~Location() {};
+
+	int SessionId;
+	float X;
+	float Y;
+	float Z;
+
+	friend ostream& operator<<(ostream &stream, Location& loc){
+		stream << loc.SessionId << endl;
+		stream << loc.X << endl;
+		stream << loc.Y << endl;
+		stream << loc.Z << endl;
+
+		return stream;
+	}
+
+	friend istream& operator>>(istream& stream, Location& loc){
+		stream >> loc.SessionId;
+		stream >> loc.X;
+		stream >> loc.Y;
+		stream >> loc.Z;
+
+		return stream;
+	}
 };
 
-struct CharacterInfo{
-	int			SessionId;
-	location	loc;
-};
+class cCharactersInfo
+{
+public:
+	cCharactersInfo() {};
+	~cCharactersInfo() {};
 
-struct CharactersInfo{
-	std::map<int, location> ciMap;
+	Location WorldCharacterInfo[MAX_CLIENTS];
+
+	friend ostream& operator<<(ostream &stream, cCharactersInfo& info)
+	{
+		for (int i = 0; i < MAX_CLIENTS; i++)
+		{
+			stream << info.WorldCharacterInfo[i] << endl;
+		}
+		return stream;
+	}
+
+	friend istream &operator>>(istream &stream, cCharactersInfo& info)
+	{
+		for (int i = 0; i < MAX_CLIENTS; i++)
+		{
+			stream >> info.WorldCharacterInfo[i];
+		}
+		return stream;
+	}
 };
 
 struct stSOCKETINFO{
@@ -53,5 +96,5 @@ private:
 	bool			bAccept;			// 요청 동작 플래그
 	bool			bWorkerThread;	// 작업 스레드 동작 플래그
 	HANDLE *		hWorkerHandle;	// 작업 스레드 핸들
-	map<int,location> WorldCharacterInfo;  // 접속한 모든 클라이언트 정보 저장 (sessionid, loc)
+	cCharactersInfo CharactersInfo;
 };

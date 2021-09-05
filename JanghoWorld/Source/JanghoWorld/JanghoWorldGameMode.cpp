@@ -41,7 +41,7 @@ void AJanghoWorldGameMode::Tick(float DeltaTime)
 	auto MyLocation = Player->GetActorLocation();
 	auto MyRotation = Player->GetActorRotation();
 
-	auto ci = Socket.SendMyLocation(SessionId,MyLocation);
+	int ci = Socket.SendMyLocation(SessionId,MyLocation);
 	
 	//월드 내 캐릭터들 수집
 	TArray<AActor*> SpawnedCharacters;

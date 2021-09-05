@@ -14,6 +14,7 @@ using namespace std;
 #define	MAX_BUFFER		4096
 #define SERVER_PORT		8000
 #define SERVER_IP		"127.0.0.1"
+#define MAX_CLIENTS		100
 
 struct stSOCKETINFO{
 	WSAOVERLAPPED	overlapped;
@@ -24,19 +25,57 @@ struct stSOCKETINFO{
 	int				sendBytes;
 };
 
-struct location {
+class Location {
+public:
+	int SessionId;
 	float x;
 	float y;
 	float z;
+
+	Location() {};
+	~Location() {};
+
+	friend ostream& operator<<(ostream &stream, Location& loc) {
+		stream << loc.SessionId << endl;
+		stream << loc.x << endl;
+		stream << loc.y << endl;
+		stream << loc.z << endl;
+
+		return stream;
+	}
+
+	friend istream& operator>>(istream &stream, Location& loc) {
+		stream >> loc.SessionId;
+		stream >> loc.x;
+		stream >> loc.y;
+		stream >> loc.z;
+
+		return stream;
+	}
 };
 
-struct CharacterInfo{
-	int			SessionId;
-	location	loc;
-};
+class cCharactersInfo{
+public:
+	cCharactersInfo() {};
+	~cCharactersInfo() {};
 
-struct CharactersInfo{
-	std::map<int, location> ciMap;
+	Location WorldCharacterInfo[MAX_CLIENTS];
+
+	friend ostream& operator<<(ostream &stream, cCharactersInfo& info) {
+		for (int i = 0; i < MAX_CLIENTS; i++) {
+			stream << info.WorldCharacterInfo[i] << endl;
+		}
+		return stream;
+	}
+
+	friend istream &operator>>(istream &stream, cCharactersInfo& info)
+	{
+		for (int i = 0; i < MAX_CLIENTS; i++)
+		{
+			stream >> info.WorldCharacterInfo[i];
+		}
+		return stream;
+	}
 };
 
 class JANGHOWORLD_API ClientSocket{
@@ -46,9 +85,10 @@ public:
 
 	bool InitSocket();
 	bool Connect(const char* pszIP, int nPort);
-	CharactersInfo* SendMyLocation(const int& SessionId, const FVector& ActorLocation);
+	int SendMyLocation(const int& SessionId, const FVector& ActorLocation);
 
 private:
 	SOCKET m_Socket;
 	char recvBuffer[MAX_BUFFER];
+	cCharactersInfo CharactersInfo;
 };

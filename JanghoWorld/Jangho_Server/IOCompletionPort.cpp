@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "IOCompletionPort.h"
 #include <process.h>
+#include<sstream>
 
 unsigned int WINAPI CallWorkerThread(LPVOID p){
 	IOCompletionPort* pOverlappedEvent = (IOCompletionPort*)p;
@@ -11,6 +12,13 @@ unsigned int WINAPI CallWorkerThread(LPVOID p){
 IOCompletionPort::IOCompletionPort(){
 	bWorkerThread = true;
 	bAccept = true;
+
+	for (int i = 0; i < MAX_CLIENTS; i++){	
+		CharactersInfo.WorldCharacterInfo[i].SessionId = -1;
+		CharactersInfo.WorldCharacterInfo[i].X = -1;
+		CharactersInfo.WorldCharacterInfo[i].Y = -1;
+		CharactersInfo.WorldCharacterInfo[i].Z = -1;
+	}
 }
 
 IOCompletionPort::~IOCompletionPort(){
@@ -193,16 +201,24 @@ void IOCompletionPort::WorkerThread(){
 			continue;
 		}
 		else{
-			CharacterInfo* info = (CharacterInfo*)pSocketInfo->dataBuf.buf;
+			Location* info = (Location*)pSocketInfo->dataBuf.buf;
 			printf_s("[클라이언트 ID : %d] 위치 수신 - X : [%f], Y : [%f], Z : [%f]\n",
-				info->SessionId,info->loc.x, info->loc.y, info->loc.z);
-			
-			//캐릭터 sessionID에 따른 위치 저장
-			WorldCharacterInfo[info->SessionId] = info->loc;
+				info->SessionId,info->X, info->Y, info->Z);
+		
+			// 캐릭터의 위치를 저장						
+			CharactersInfo.WorldCharacterInfo[info->SessionId].SessionId = info->SessionId;
+			CharactersInfo.WorldCharacterInfo[info->SessionId].X = info->X;
+			CharactersInfo.WorldCharacterInfo[info->SessionId].Y = info->Y;
+			CharactersInfo.WorldCharacterInfo[info->SessionId].Z = info->Z;
 
-			CopyMemory(pSocketInfo->messageBuffer, (CHAR*)&WorldCharacterInfo, sizeof(struct CharactersInfo));
+			//직렬화
+			stringstream InputStream;
+			InputStream << CharactersInfo;
+
+			// !!! 중요 !!! data.buf 에다 직접 데이터를 쓰면 쓰레기값이 전달될 수 있음
+			CopyMemory(pSocketInfo->messageBuffer, (CHAR*)InputStream.str().c_str(), InputStream.str().length());
 			pSocketInfo->dataBuf.buf = pSocketInfo->messageBuffer;
-			pSocketInfo->dataBuf.len = sizeof(struct CharactersInfo);
+			pSocketInfo->dataBuf.len = InputStream.str().length();
 
 			// 다른 클라이언트 정보 송신			
 			nResult = WSASend(

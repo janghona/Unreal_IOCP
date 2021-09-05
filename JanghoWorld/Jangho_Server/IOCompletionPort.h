@@ -20,7 +20,7 @@ struct CharacterInfo{
 };
 
 struct CharactersInfo{
-	std::map<int, location> m;
+	std::map<int, location> ciMap;
 };
 
 struct stSOCKETINFO{
@@ -47,11 +47,11 @@ public:
 	void WorkerThread();
 
 private:
-	stSOCKETINFO *	m_pSocketInfo;		// 소켓 정보
-	SOCKET			m_listenSocket;		// 서버 리슨 소켓
-	HANDLE			m_hIOCP;			// IOCP 객체 핸들
-	bool			m_bAccept;			// 요청 동작 플래그
-	bool			m_bWorkerThread;	// 작업 스레드 동작 플래그
-	HANDLE *		m_pWorkerHandle;	// 작업 스레드 핸들
-	CharactersInfo WorldCharacterInfo;  // 접속한 모든 클라이언트 정보 저장 (sessionid, loc)
+	stSOCKETINFO *	pSocketInfo;		// 소켓 정보
+	SOCKET			listenSocket;		// 서버 리슨 소켓
+	HANDLE			hIOCP;			// IOCP 객체 핸들
+	bool			bAccept;			// 요청 동작 플래그
+	bool			bWorkerThread;	// 작업 스레드 동작 플래그
+	HANDLE *		hWorkerHandle;	// 작업 스레드 핸들
+	map<int,location> WorldCharacterInfo;  // 접속한 모든 클라이언트 정보 저장 (sessionid, loc)
 };

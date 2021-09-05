@@ -25,6 +25,8 @@ private:
 	ClientSocket Socket;
 	bool bIsConnected;
 	int SessionId;  // 캐릭터 세션 아이디(랜덤값1~100)
+	map<int, location> OtherCharacterInfo;
+	bool bIsSpawned;
 };
 
 

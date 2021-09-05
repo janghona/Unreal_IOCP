@@ -19,6 +19,7 @@ AJanghoWorldGameMode::AJanghoWorldGameMode()
 
 	//세션 아이디
 	SessionId = FMath::RandRange(0,100);
+	bIsSpawned = false;
 
 	// server 소켓 연결
 	Socket.InitSocket();
@@ -40,7 +41,7 @@ void AJanghoWorldGameMode::Tick(float DeltaTime)
 	auto MyLocation = Player->GetActorLocation();
 	auto MyRotation = Player->GetActorRotation();
 
-	Socket.SendMyLocation(SessionId,MyLocation);
+	auto ci = Socket.SendMyLocation(SessionId,MyLocation);
 	
 	//월드 내 캐릭터들 수집
 	TArray<AActor*> SpawnedCharacters;
@@ -61,8 +62,10 @@ void AJanghoWorldGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 
-	UWorld* const world = GetWorld();
+	FVector t;
+	t.X = 69; t.Y = 0; t.Z = 0;
 
+	UWorld* const world = GetWorld();
 	if (world) {
 		FVector SpawnLocation;
 		SpawnLocation.X = -709;

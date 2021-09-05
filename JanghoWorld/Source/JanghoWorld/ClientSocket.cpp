@@ -3,24 +3,27 @@
 
 ClientSocket::ClientSocket(){}
 
-ClientSocket::~ClientSocket(){}
+ClientSocket::~ClientSocket(){
+	closesocket(m_Socket);
+	WSACleanup();
+}
 
 bool ClientSocket::InitSocket(){
 	WSADATA wsaData;
 	// 윈속 버전을 2.2로 초기화
-	int nRet = WSAStartup(MAKEWORD(2, 2), &wsaData);
-	if (nRet != 0) {
-		// std::cout << "Error : " << WSAGetLastError() << std::endl;		
+	int nResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+	if (nResult != 0) {
+		cout << "Error : " << WSAGetLastError() << std::endl;		
 		return false;
 	}
 
 	// TCP 소켓 생성
-	m_Socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	m_Socket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_IP,NULL,0,WSA_FLAG_OVERLAPPED);
 	if (m_Socket == INVALID_SOCKET) {
-		// std::cout << "Error : " << WSAGetLastError() << std::endl;
+		cout << "Error : " << WSAGetLastError() << std::endl;
 		return false;
 	}
-	// std::cout << "socket initialize success." << std::endl;
+	cout << "socket initialize success." << std::endl;
 	return true;
 }
 
@@ -33,16 +36,16 @@ bool ClientSocket::Connect(const char * pszIP, int nPort){
 	stServerAddr.sin_port = htons(nPort);
 	stServerAddr.sin_addr.s_addr = inet_addr(pszIP);
 
-	int nRet = connect(m_Socket, (sockaddr*)&stServerAddr, sizeof(sockaddr));
-	if (nRet == SOCKET_ERROR) {
-		// std::cout << "Error : " << WSAGetLastError() << std::endl;
+	int nResult = connect(m_Socket, (sockaddr*)&stServerAddr, sizeof(sockaddr));
+	if (nResult == SOCKET_ERROR) {
+		cout << "Error : " << WSAGetLastError() << std::endl;
 		return false;
 	}
-	// std::cout << "Connection success..." << std::endl;
+	cout << "Connection success..." << std::endl;
 	return true;
 }
 
-int ClientSocket::SendMyLocation(const int& SessionId, const FVector& ActorLocation){
+CharactersInfo* ClientSocket::SendMyLocation(const int& SessionId, const FVector& ActorLocation) {
 	location loc;
 	loc.x = ActorLocation.X;
 	loc.y = ActorLocation.Y;
@@ -55,15 +58,16 @@ int ClientSocket::SendMyLocation(const int& SessionId, const FVector& ActorLocat
 
 	int nSendLen = send(m_Socket, (CHAR*)&info, sizeof(CharacterInfo), 0);
 	if (nSendLen == -1) {
-		return -1;
+		return nullptr;
 	}
 
-	int nRecvLen = recv(m_Socket, (CHAR*)&recvBuffer, 1024, 0);
+	int nRecvLen = recv(m_Socket, (CHAR*)&recvBuffer, MAX_BUFFER, 0);
 	if (nRecvLen == -1) {
-		return -1;
+		return nullptr;
 	}
 	else {
 		ci = (CharactersInfo*)&recvBuffer;
 	}
-	return ci->m.size();
+	ci->ciMap.at(0);
+	return ci;
 }

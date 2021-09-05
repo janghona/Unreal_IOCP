@@ -9,21 +9,21 @@ unsigned int WINAPI CallWorkerThread(LPVOID p){
 }
 
 IOCompletionPort::IOCompletionPort(){
-	m_bWorkerThread = true;
-	m_bAccept = true;
+	bWorkerThread = true;
+	bAccept = true;
 }
 
 IOCompletionPort::~IOCompletionPort(){
 	// winsock 의 사용을 끝낸다
 	WSACleanup();
 	// 다 사용한 객체를 삭제
-	if (m_pSocketInfo){
-		delete[] m_pSocketInfo;
-		m_pSocketInfo = NULL;
+	if (pSocketInfo){
+		delete[] pSocketInfo;
+		pSocketInfo = NULL;
 	}
-	if (m_pWorkerHandle){
-		delete[] m_pWorkerHandle;
-		m_pWorkerHandle = NULL;
+	if (hWorkerHandle){
+		delete[] hWorkerHandle;
+		hWorkerHandle = NULL;
 	}
 }
 
@@ -39,8 +39,8 @@ bool IOCompletionPort::Initialize(){
 	}
 
 	// 소켓 생성
-	m_listenSocket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
-	if (m_listenSocket == INVALID_SOCKET){
+	listenSocket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_IP, NULL, 0, WSA_FLAG_OVERLAPPED);
+	if (listenSocket == INVALID_SOCKET){
 		printf_s("[ERROR] 소켓 생성 실패\n");
 		return false;
 	}
@@ -52,19 +52,19 @@ bool IOCompletionPort::Initialize(){
 	serverAddr.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
 
 	// 소켓 설정
-	nResult = bind(m_listenSocket, (struct sockaddr*)&serverAddr, sizeof(SOCKADDR_IN));
+	nResult = bind(listenSocket, (struct sockaddr*)&serverAddr, sizeof(SOCKADDR_IN));
 	if (nResult == SOCKET_ERROR){
 		printf_s("[ERROR] bind 실패\n");
-		closesocket(m_listenSocket);
+		closesocket(listenSocket);
 		WSACleanup();
 		return false;
 	}
 
 	// 수신 대기열 생성
-	nResult = listen(m_listenSocket, 5);
+	nResult = listen(listenSocket, 5);
 	if (nResult == SOCKET_ERROR){
 		printf_s("[ERROR] listen 실패\n");
-		closesocket(m_listenSocket);
+		closesocket(listenSocket);
 		WSACleanup();
 		return false;
 	}
@@ -81,7 +81,7 @@ void IOCompletionPort::StartServer(){
 	DWORD flags;
 
 	// Completion Port 객체 생성
-	m_hIOCP = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0);
+	hIOCP = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0);
 
 	// Worker Thread 생성
 	if (!CreateWorkerThread()) return;
@@ -89,32 +89,32 @@ void IOCompletionPort::StartServer(){
 	printf_s("[INFO] 서버 시작...\n");
 
 	// 클라이언트 접속을 받음
-	while (m_bAccept){
-		clientSocket = WSAAccept(m_listenSocket, (struct sockaddr *)&clientAddr, &addrLen, NULL, NULL);
+	while (bAccept){
+		clientSocket = WSAAccept(listenSocket, (struct sockaddr *)&clientAddr, &addrLen, NULL, NULL);
 
 		if (clientSocket == INVALID_SOCKET){
 			printf_s("[ERROR] Accept 실패\n");
 			return;
 		}
 
-		m_pSocketInfo = new stSOCKETINFO();
-		m_pSocketInfo->socket = clientSocket;
-		m_pSocketInfo->recvBytes = 0;
-		m_pSocketInfo->sendBytes = 0;
-		m_pSocketInfo->dataBuf.len = MAX_BUFFER;
-		m_pSocketInfo->dataBuf.buf = m_pSocketInfo->messageBuffer;
+		pSocketInfo = new stSOCKETINFO();
+		pSocketInfo->socket = clientSocket;
+		pSocketInfo->recvBytes = 0;
+		pSocketInfo->sendBytes = 0;
+		pSocketInfo->dataBuf.len = MAX_BUFFER;
+		pSocketInfo->dataBuf.buf = pSocketInfo->messageBuffer;
 		flags = 0;
 
-		m_hIOCP = CreateIoCompletionPort((HANDLE)clientSocket, m_hIOCP, (DWORD)m_pSocketInfo, 0);
+		hIOCP = CreateIoCompletionPort((HANDLE)clientSocket, hIOCP, (DWORD)pSocketInfo, 0);
 
 		// 중첩 소켓을 지정하고 완료시 실행될 함수를 넘겨줌
 		nResult = WSARecv(
-			m_pSocketInfo->socket,
-			&m_pSocketInfo->dataBuf,
+			pSocketInfo->socket,
+			&pSocketInfo->dataBuf,
 			1,
 			&recvBytes,
 			&flags,
-			&(m_pSocketInfo->overlapped),
+			&(pSocketInfo->overlapped),
 			NULL
 		);
 
@@ -137,15 +137,15 @@ bool IOCompletionPort::CreateWorkerThread(){
 	int nThreadCnt = sysInfo.dwNumberOfProcessors * 2;
 
 	// thread handler 선언
-	m_pWorkerHandle = new HANDLE[nThreadCnt];
+	hWorkerHandle = new HANDLE[nThreadCnt];
 	// thread 생성
 	for (int i = 0; i < nThreadCnt; i++){
-		m_pWorkerHandle[i] = (HANDLE *)_beginthreadex(NULL, 0, &CallWorkerThread, this, CREATE_SUSPENDED, &threadId);
-		if (m_pWorkerHandle[i] == NULL){
+		hWorkerHandle[i] = (HANDLE *)_beginthreadex(NULL, 0, &CallWorkerThread, this, CREATE_SUSPENDED, &threadId);
+		if (hWorkerHandle[i] == NULL){
 			printf_s("[ERROR] Worker Thread 생성 실패\n");
 			return false;
 		}
-		ResumeThread(m_pWorkerHandle[i]);
+		ResumeThread(hWorkerHandle[i]);
 	}
 	printf_s("[INFO] Worker Thread 시작...\n");
 	return true;
@@ -165,13 +165,13 @@ void IOCompletionPort::WorkerThread(){
 	// 
 	DWORD	dwFlags = 0;
 
-	while (m_bWorkerThread){
+	while (bWorkerThread){
 		/**
 		 * 이 함수로 인해 쓰레드들은 WaitingThread Queue 에 대기상태로 들어가게 됨
 		 * 완료된 Overlapped I/O 작업이 발생하면 IOCP Queue 에서 완료된 작업을 가져와
 		 * 뒷처리를 함
 		 */
-		bResult = GetQueuedCompletionStatus(m_hIOCP,
+		bResult = GetQueuedCompletionStatus(hIOCP,
 			&recvBytes,				// 실제로 전송된 바이트
 			(PULONG_PTR)&pCompletionKey,	// completion key
 			(LPOVERLAPPED *)&pSocketInfo,			// overlapped I/O 객체
@@ -196,8 +196,15 @@ void IOCompletionPort::WorkerThread(){
 			CharacterInfo* info = (CharacterInfo*)pSocketInfo->dataBuf.buf;
 			printf_s("[클라이언트 ID : %d] 위치 수신 - X : [%f], Y : [%f], Z : [%f]\n",
 				info->SessionId,info->loc.x, info->loc.y, info->loc.z);
+			
+			//캐릭터 sessionID에 따른 위치 저장
+			WorldCharacterInfo[info->SessionId] = info->loc;
 
-			// 클라이언트의 응답을 그대로 송신			
+			CopyMemory(pSocketInfo->messageBuffer, (CHAR*)&WorldCharacterInfo, sizeof(struct CharactersInfo));
+			pSocketInfo->dataBuf.buf = pSocketInfo->messageBuffer;
+			pSocketInfo->dataBuf.len = sizeof(struct CharactersInfo);
+
+			// 다른 클라이언트 정보 송신			
 			nResult = WSASend(
 				pSocketInfo->socket,
 				&(pSocketInfo->dataBuf),
@@ -217,9 +224,9 @@ void IOCompletionPort::WorkerThread(){
 
 			// stSOCKETINFO 데이터 초기화
 			ZeroMemory(&(pSocketInfo->overlapped), sizeof(OVERLAPPED));
+			ZeroMemory(pSocketInfo->messageBuffer, MAX_BUFFER);
 			pSocketInfo->dataBuf.len = MAX_BUFFER;
 			pSocketInfo->dataBuf.buf = pSocketInfo->messageBuffer;
-			ZeroMemory(pSocketInfo->messageBuffer, MAX_BUFFER);
 			pSocketInfo->recvBytes = 0;
 			pSocketInfo->sendBytes = 0;
 

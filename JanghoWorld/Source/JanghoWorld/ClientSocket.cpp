@@ -4,7 +4,7 @@
 ClientSocket::ClientSocket(){}
 
 ClientSocket::~ClientSocket(){
-	closesocket(m_Socket);
+	closesocket(serverSocket);
 	WSACleanup();
 }
 
@@ -18,8 +18,8 @@ bool ClientSocket::InitSocket(){
 	}
 
 	// TCP 家南 积己
-	m_Socket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_IP,NULL,0,WSA_FLAG_OVERLAPPED);
-	if (m_Socket == INVALID_SOCKET) {
+	serverSocket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_IP,NULL,0,WSA_FLAG_OVERLAPPED);
+	if (serverSocket == INVALID_SOCKET) {
 		cout << "Error : " << WSAGetLastError() << std::endl;
 		return false;
 	}
@@ -35,7 +35,7 @@ bool ClientSocket::Connect(const char * pszIP, int nPort){
 	stServerAddr.sin_port = htons(nPort);
 	stServerAddr.sin_addr.s_addr = inet_addr(pszIP);
 
-	int nResult = connect(m_Socket, (sockaddr*)&stServerAddr, sizeof(sockaddr));
+	int nResult = connect(serverSocket, (sockaddr*)&stServerAddr, sizeof(sockaddr));
 	if (nResult == SOCKET_ERROR) {
 		cout << "Error : " << WSAGetLastError() << std::endl;
 		return false;
@@ -44,21 +44,18 @@ bool ClientSocket::Connect(const char * pszIP, int nPort){
 	return true;
 }
 
-int ClientSocket::SendMyLocation(const int& SessionId, const FVector& ActorLocation) {
-	Location loc;
-	loc.SessionId = SessionId;
-	loc.x = ActorLocation.X;
-	loc.y = ActorLocation.Y;
-	loc.z = ActorLocation.Z;
+cCharactersInfo* ClientSocket::SyncCharacters(cCharacter info){
+	stringstream InputStream;
+	InputStream << info;
 
-	int nSendLen = send(m_Socket, (CHAR*)&loc, sizeof(Location), 0);
+	int nSendLen = send(serverSocket, (CHAR*)InputStream.str().c_str(), InputStream.str().length(), 0);
 	if (nSendLen == -1) {
-		return -1;
+		return nullptr;
 	}
 
-	int nRecvLen = recv(m_Socket, (CHAR*)&recvBuffer, MAX_BUFFER, 0);
+	int nRecvLen = recv(serverSocket, (CHAR*)&recvBuffer, MAX_BUFFER, 0);
 	if (nRecvLen == -1) {
-		return -1;
+		return nullptr;
 	}
 	else {
 		// 开流纺拳
@@ -66,12 +63,6 @@ int ClientSocket::SendMyLocation(const int& SessionId, const FVector& ActorLocat
 		OutputStream << recvBuffer;
 		OutputStream >> CharactersInfo;
 
-		for (int i = 0; i < MAX_CLIENTS; i++) {
-			int ssID = CharactersInfo.WorldCharacterInfo[i].SessionId;
-			if (ssID != -1) {
-				return CharactersInfo.WorldCharacterInfo[i].x;
-			}
-		}
-		return -1;
+		return &CharactersInfo;
 	}
 }

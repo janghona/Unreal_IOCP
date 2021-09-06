@@ -25,31 +25,40 @@ struct stSOCKETINFO{
 	int				sendBytes;
 };
 
-class Location {
+class cCharacter {
 public:
-	int SessionId;
+	int sessionId;
 	float x;
 	float y;
 	float z;
+	float yaw;
+	float pitch;
+	float roll;
 
-	Location() {};
-	~Location() {};
+	cCharacter() {};
+	~cCharacter() {};
 
-	friend ostream& operator<<(ostream &stream, Location& loc) {
-		stream << loc.SessionId << endl;
-		stream << loc.x << endl;
-		stream << loc.y << endl;
-		stream << loc.z << endl;
+	friend ostream& operator<<(ostream &stream, cCharacter& info) {
+		stream << info.SessionId << endl;
+		stream << info.x << endl;
+		stream << info.y << endl;
+		stream << info.z << endl;
+		stream << info.yaw << endl;
+		stream << info.pitch << endl;
+		stream << info.roll << endl;
 
 		return stream;
 	}
 
-	friend istream& operator>>(istream &stream, Location& loc) {
-		stream >> loc.SessionId;
-		stream >> loc.x;
-		stream >> loc.y;
-		stream >> loc.z;
-
+	friend istream& operator>>(istream &stream, cCharacter& info) {
+		stream >> info.SessionId;
+		stream >> info.x;
+		stream >> info.y;
+		stream >> info.z;
+		stream >> info.yaw;
+		stream >> info.pitch;
+		stream >> info.roll;
+		
 		return stream;
 	}
 };
@@ -59,7 +68,7 @@ public:
 	cCharactersInfo() {};
 	~cCharactersInfo() {};
 
-	Location WorldCharacterInfo[MAX_CLIENTS];
+	cCharacter WorldCharacterInfo[MAX_CLIENTS];
 
 	friend ostream& operator<<(ostream &stream, cCharactersInfo& info) {
 		for (int i = 0; i < MAX_CLIENTS; i++) {
@@ -85,10 +94,10 @@ public:
 
 	bool InitSocket();
 	bool Connect(const char* pszIP, int nPort);
-	int SendMyLocation(const int& SessionId, const FVector& ActorLocation);
+	cCharactersInfo* SyncCharacters(cCharacter info);
 
 private:
-	SOCKET m_Socket;
+	SOCKET serverSocket;
 	char recvBuffer[MAX_BUFFER];
 	cCharactersInfo CharactersInfo;
 };

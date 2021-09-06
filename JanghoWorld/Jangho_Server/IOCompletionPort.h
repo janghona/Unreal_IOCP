@@ -10,30 +10,39 @@ using namespace std;
 #define SERVER_PORT		8000
 #define MAX_CLIENTS		100
 
-class Location {
+class cCharacter {
 public:
-	Location() {};
-	~Location() {};
+	cCharacter() {};
+	~cCharacter() {};
 
-	int SessionId;
-	float X;
-	float Y;
-	float Z;
+	int sessionId;
+	float x;
+	float y;
+	float z;
+	float yaw;
+	float pitch;
+	float roll;
 
-	friend ostream& operator<<(ostream &stream, Location& loc){
-		stream << loc.SessionId << endl;
-		stream << loc.X << endl;
-		stream << loc.Y << endl;
-		stream << loc.Z << endl;
+	friend ostream& operator<<(ostream &stream, cCharacter& info){
+		stream << info.sessionId << endl;
+		stream << info.x << endl;
+		stream << info.y << endl;
+		stream << info.z << endl;
+		stream << info.yaw << endl;
+		stream << info.pitch << endl;
+		stream << info.roll << endl;
 
 		return stream;
 	}
 
-	friend istream& operator>>(istream& stream, Location& loc){
-		stream >> loc.SessionId;
-		stream >> loc.X;
-		stream >> loc.Y;
-		stream >> loc.Z;
+	friend istream& operator>>(istream& stream, cCharacter& info){
+		stream >> info.sessionId;
+		stream >> info.x;
+		stream >> info.y;
+		stream >> info.z;
+		stream >> info.yaw;
+		stream >> info.pitch;
+		stream >> info.roll;
 
 		return stream;
 	}
@@ -45,7 +54,7 @@ public:
 	cCharactersInfo() {};
 	~cCharactersInfo() {};
 
-	Location WorldCharacterInfo[MAX_CLIENTS];
+	cCharacter WorldCharacterInfo[MAX_CLIENTS];
 
 	friend ostream& operator<<(ostream &stream, cCharactersInfo& info)
 	{

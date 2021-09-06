@@ -14,10 +14,10 @@ IOCompletionPort::IOCompletionPort(){
 	bAccept = true;
 
 	for (int i = 0; i < MAX_CLIENTS; i++){	
-		CharactersInfo.WorldCharacterInfo[i].SessionId = -1;
-		CharactersInfo.WorldCharacterInfo[i].X = -1;
-		CharactersInfo.WorldCharacterInfo[i].Y = -1;
-		CharactersInfo.WorldCharacterInfo[i].Z = -1;
+		CharactersInfo.WorldCharacterInfo[i].sessionId = -1;
+		CharactersInfo.WorldCharacterInfo[i].x = -1;
+		CharactersInfo.WorldCharacterInfo[i].y = -1;
+		CharactersInfo.WorldCharacterInfo[i].z = -1;
 	}
 }
 
@@ -201,24 +201,31 @@ void IOCompletionPort::WorkerThread(){
 			continue;
 		}
 		else{
-			Location* info = (Location*)pSocketInfo->dataBuf.buf;
-			printf_s("[클라이언트 ID : %d] 위치 수신 - X : [%f], Y : [%f], Z : [%f]\n",
-				info->SessionId,info->X, info->Y, info->Z);
+			stringstream RecvStream;
+			cCharacter info;
+			RecvStream << pSocketInfo->dataBuf.buf;
+			RecvStream >> info;
+
+			printf_s("[클라이언트 ID : %d] 정보 수신 - X : [%f], Y : [%f], Z : [%f],Yaw : [%f], Pitch : [%f], Roll : [%f]\n",
+				info.sessionId, info.x, info.y, info.z, info.yaw, info.pitch, info.roll);
 		
 			// 캐릭터의 위치를 저장						
-			CharactersInfo.WorldCharacterInfo[info->SessionId].SessionId = info->SessionId;
-			CharactersInfo.WorldCharacterInfo[info->SessionId].X = info->X;
-			CharactersInfo.WorldCharacterInfo[info->SessionId].Y = info->Y;
-			CharactersInfo.WorldCharacterInfo[info->SessionId].Z = info->Z;
+			CharactersInfo.WorldCharacterInfo[info.sessionId].sessionId = info.sessionId;
+			CharactersInfo.WorldCharacterInfo[info.sessionId].x = info.x;
+			CharactersInfo.WorldCharacterInfo[info.sessionId].y = info.y;
+			CharactersInfo.WorldCharacterInfo[info.sessionId].z = info.z;
+			CharactersInfo.WorldCharacterInfo[info.sessionId].yaw = info.yaw;
+			CharactersInfo.WorldCharacterInfo[info.sessionId].pitch = info.pitch;
+			CharactersInfo.WorldCharacterInfo[info.sessionId].roll = info.roll;
 
 			//직렬화
-			stringstream InputStream;
-			InputStream << CharactersInfo;
+			stringstream SendStream;
+			SendStream << CharactersInfo;
 
 			// !!! 중요 !!! data.buf 에다 직접 데이터를 쓰면 쓰레기값이 전달될 수 있음
-			CopyMemory(pSocketInfo->messageBuffer, (CHAR*)InputStream.str().c_str(), InputStream.str().length());
+			CopyMemory(pSocketInfo->messageBuffer, (CHAR*)SendStream.str().c_str(), SendStream.str().length());
 			pSocketInfo->dataBuf.buf = pSocketInfo->messageBuffer;
-			pSocketInfo->dataBuf.len = InputStream.str().length();
+			pSocketInfo->dataBuf.len = SendStream.str().length();
 
 			// 다른 클라이언트 정보 송신			
 			nResult = WSASend(

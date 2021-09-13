@@ -14,10 +14,10 @@ IOCompletionPort::IOCompletionPort(){
 	bAccept = true;
 
 	for (int i = 0; i < MAX_CLIENTS; i++){	
-		CharactersInfo.WorldCharacterInfo[i].sessionId = -1;
-		CharactersInfo.WorldCharacterInfo[i].x = -1;
-		CharactersInfo.WorldCharacterInfo[i].y = -1;
-		CharactersInfo.WorldCharacterInfo[i].z = -1;
+		CharactersInfo.WorldCharacterInfo[i].SessionId = -1;
+		CharactersInfo.WorldCharacterInfo[i].X = -1;
+		CharactersInfo.WorldCharacterInfo[i].Y = -1;
+		CharactersInfo.WorldCharacterInfo[i].Z = -1;
 	}
 }
 
@@ -207,16 +207,16 @@ void IOCompletionPort::WorkerThread(){
 			RecvStream >> info;
 
 			printf_s("[클라이언트 ID : %d] 정보 수신 - X : [%f], Y : [%f], Z : [%f],Yaw : [%f], Pitch : [%f], Roll : [%f]\n",
-				info.sessionId, info.x, info.y, info.z, info.yaw, info.pitch, info.roll);
+				info.SessionId, info.X, info.Y, info.Z, info.Yaw, info.Pitch, info.Roll);
 		
 			// 캐릭터의 위치를 저장						
-			CharactersInfo.WorldCharacterInfo[info.sessionId].sessionId = info.sessionId;
-			CharactersInfo.WorldCharacterInfo[info.sessionId].x = info.x;
-			CharactersInfo.WorldCharacterInfo[info.sessionId].y = info.y;
-			CharactersInfo.WorldCharacterInfo[info.sessionId].z = info.z;
-			CharactersInfo.WorldCharacterInfo[info.sessionId].yaw = info.yaw;
-			CharactersInfo.WorldCharacterInfo[info.sessionId].pitch = info.pitch;
-			CharactersInfo.WorldCharacterInfo[info.sessionId].roll = info.roll;
+			CharactersInfo.WorldCharacterInfo[info.SessionId].SessionId = info.SessionId;
+			CharactersInfo.WorldCharacterInfo[info.SessionId].X = info.X;
+			CharactersInfo.WorldCharacterInfo[info.SessionId].Y = info.Y;
+			CharactersInfo.WorldCharacterInfo[info.SessionId].Z = info.Z;
+			CharactersInfo.WorldCharacterInfo[info.SessionId].Yaw = info.Yaw;
+			CharactersInfo.WorldCharacterInfo[info.SessionId].Pitch = info.Pitch;
+			CharactersInfo.WorldCharacterInfo[info.SessionId].Roll = info.Roll;
 
 			//직렬화
 			stringstream SendStream;

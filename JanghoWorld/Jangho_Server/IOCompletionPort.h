@@ -4,76 +4,12 @@
 #include <WinSock2.h>
 #include<map>
 #include<iostream>
+#include "CommonClass.h"
 using namespace std;
 
 #define	MAX_BUFFER		1024
 #define SERVER_PORT		8000
 #define MAX_CLIENTS		100
-
-class cCharacter {
-public:
-	cCharacter() {};
-	~cCharacter() {};
-
-	int sessionId;
-	float x;
-	float y;
-	float z;
-	float yaw;
-	float pitch;
-	float roll;
-
-	friend ostream& operator<<(ostream &stream, cCharacter& info){
-		stream << info.sessionId << endl;
-		stream << info.x << endl;
-		stream << info.y << endl;
-		stream << info.z << endl;
-		stream << info.yaw << endl;
-		stream << info.pitch << endl;
-		stream << info.roll << endl;
-
-		return stream;
-	}
-
-	friend istream& operator>>(istream& stream, cCharacter& info){
-		stream >> info.sessionId;
-		stream >> info.x;
-		stream >> info.y;
-		stream >> info.z;
-		stream >> info.yaw;
-		stream >> info.pitch;
-		stream >> info.roll;
-
-		return stream;
-	}
-};
-
-class cCharactersInfo
-{
-public:
-	cCharactersInfo() {};
-	~cCharactersInfo() {};
-
-	cCharacter WorldCharacterInfo[MAX_CLIENTS];
-
-	friend ostream& operator<<(ostream &stream, cCharactersInfo& info)
-	{
-		for (int i = 0; i < MAX_CLIENTS; i++)
-		{
-			stream << info.WorldCharacterInfo[i] << endl;
-		}
-		return stream;
-	}
-
-	friend istream &operator>>(istream &stream, cCharactersInfo& info)
-	{
-		for (int i = 0; i < MAX_CLIENTS; i++)
-		{
-			stream >> info.WorldCharacterInfo[i];
-		}
-		return stream;
-	}
-};
 
 struct stSOCKETINFO{
 	WSAOVERLAPPED	overlapped;
@@ -105,5 +41,5 @@ private:
 	bool			bAccept;			// 요청 동작 플래그
 	bool			bWorkerThread;	// 작업 스레드 동작 플래그
 	HANDLE *		hWorkerHandle;	// 작업 스레드 핸들
-	cCharactersInfo CharactersInfo;
+	cCharactersInfo CharactersInfo; // 모든 클라이언트 정보 저장
 };

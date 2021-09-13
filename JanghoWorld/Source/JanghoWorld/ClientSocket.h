@@ -39,7 +39,7 @@ public:
 	~cCharacter() {};
 
 	friend ostream& operator<<(ostream &stream, cCharacter& info) {
-		stream << info.SessionId << endl;
+		stream << info.sessionId << endl;
 		stream << info.x << endl;
 		stream << info.y << endl;
 		stream << info.z << endl;
@@ -51,7 +51,7 @@ public:
 	}
 
 	friend istream& operator>>(istream &stream, cCharacter& info) {
-		stream >> info.SessionId;
+		stream >> info.sessionId;
 		stream >> info.x;
 		stream >> info.y;
 		stream >> info.z;

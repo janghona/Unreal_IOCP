@@ -16,6 +16,10 @@ using namespace std;
 #define SERVER_IP		"127.0.0.1"
 #define MAX_CLIENTS		100
 
+enum EPacketType{
+	SEND_CHARACTER
+};
+
 struct stSOCKETINFO{
 	WSAOVERLAPPED	overlapped;
 	WSABUF			dataBuf;
@@ -94,7 +98,7 @@ public:
 
 	bool InitSocket();
 	bool Connect(const char* pszIP, int nPort);
-	cCharactersInfo* SyncCharacters(cCharacter info);
+	cCharactersInfo* SyncCharacters(cCharacter& info);
 
 private:
 	SOCKET serverSocket;

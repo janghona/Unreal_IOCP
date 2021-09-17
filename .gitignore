@@ -5,5 +5,8 @@ JanghoWorld/Build/*
 JanghoWorld/Binaries/*
 JanghoWorld/Jangho_Server/.vs/*
 JanghoWorld/Jangho_Server/x64/*
+JanghoWorld/PacketDLL/.vs/*
+JanghoWorld/PacketDLL/x64/*
+JanghoWorld/PacketDLL/PacketDLL/x64/*
 *_BuiltData.uasset
 *.sln

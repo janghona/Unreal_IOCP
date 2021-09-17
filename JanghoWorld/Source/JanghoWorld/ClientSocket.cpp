@@ -44,8 +44,10 @@ bool ClientSocket::Connect(const char * pszIP, int nPort){
 	return true;
 }
 
-cCharactersInfo* ClientSocket::SyncCharacters(cCharacter info){
+cCharactersInfo* ClientSocket::SyncCharacters(cCharacter& info){
 	stringstream InputStream;
+	// 요청 종류
+	InputStream << EPacketType::SEND_CHARACTER << endl;;
 	InputStream << info;
 
 	int nSendLen = send(serverSocket, (CHAR*)InputStream.str().c_str(), InputStream.str().length(), 0);

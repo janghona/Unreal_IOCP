@@ -3,7 +3,6 @@
 #include "JanghoWorldGameMode.h"
 #include "JanghoWorldCharacter.h"
 #include "UObject/ConstructorHelpers.h"
-#include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
 #include<string>
 
@@ -19,7 +18,7 @@ AJanghoWorldGameMode::AJanghoWorldGameMode()
 	PrimaryActorTick.bCanEverTick = true;
 
 	//세션 아이디
-	sessionId = FMath::RandRange(0,100);
+	SessionId = FMath::RandRange(0,100);
 
 	// server 소켓 연결
 	Socket.InitSocket();
@@ -34,64 +33,68 @@ void AJanghoWorldGameMode::Tick(float DeltaTime){
 
 	if (!bIsConnected) return;
 
-	auto Player = Cast<AJanghoWorldCharacter>(UGameplayStatics::GetPlayerPawn(this, 0));
+	auto Player = Cast<AJanghoWorldCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
 	if (!Player) return;
 
+	//플레이어 위치, 회전 가져옴
 	auto MyLocation = Player->GetActorLocation();
 	auto MyRotation = Player->GetActorRotation();
 
 	cCharacter Character;
-	Character.sessionId = sessionId;
-	Character.x = MyLocation.X;
-	Character.y = MyLocation.Y;
-	Character.z = MyLocation.Z;
-	Character.yaw = MyRotation.Yaw;
-	Character.pitch = MyRotation.Pitch;
-	Character.roll = MyRotation.Roll;
+	Character.SessionId = SessionId;
+	Character.X = MyLocation.X;
+	Character.Y = MyLocation.Y;
+	Character.Z = MyLocation.Z;
+	Character.Yaw = MyRotation.Yaw;
+	Character.Pitch = MyRotation.Pitch;
+	Character.Roll = MyRotation.Roll;
 
 	// 플레이어의 세션 아이디와 위치를 서버에게 보냄
 	cCharactersInfo* ci = Socket.SyncCharacters(Character);
+	if (ci == nullptr) return;
 	UWorld* const world = GetWorld();
+	if (world == nullptr) return;
+
 	//월드 내 캐릭터들 수집
 	TArray<AActor*> SpawnedCharacters;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AJanghoWorldCharacter::StaticClass(), SpawnedCharacters);
+	UGameplayStatics::GetAllActorsOfClass(GetWorld() , AJanghoWorldCharacter::StaticClass(), SpawnedCharacters);
 
 	for (int i = 0; i < MAX_CLIENTS; i++) {
-		int CharacterSessionId = ci->WorldCharacterInfo[i].sessionId;
+		int CharacterSessionId = ci->WorldCharacterInfo[i].SessionId;
 		// 유효한 세션 아이디면서 플레이어의 세션아이디가 아닐때
-		if (CharacterSessionId != -1 && CharacterSessionId != sessionId) {
+		if (CharacterSessionId != -1 && CharacterSessionId != SessionId && ci->WorldCharacterInfo[i].X != -1) {
 			// 월드내 해당 세션 아이디와 매칭되는 Actor 검색			
 			auto Actor = FindActorBySessionId(SpawnedCharacters, CharacterSessionId);
 			// 해당되는 세션 아이디가 없을 시 월드에 스폰
 			if (Actor == nullptr) {
 				FVector SpawnLocation;
-				SpawnLocation.X = ci->WorldCharacterInfo[i].x;
-				SpawnLocation.Y = ci->WorldCharacterInfo[i].y;
-				SpawnLocation.Z = ci->WorldCharacterInfo[i].z;
+				SpawnLocation.X = ci->WorldCharacterInfo[i].X;
+				SpawnLocation.Y = ci->WorldCharacterInfo[i].Y;
+				SpawnLocation.Z = ci->WorldCharacterInfo[i].Z;
 
 				FRotator SpawnRotation;
-				SpawnRotation.Yaw = ci->WorldCharacterInfo[i].yaw;
-				SpawnRotation.Pitch = ci->WorldCharacterInfo[i].pitch;
-				SpawnRotation.Roll = ci->WorldCharacterInfo[i].roll;
+				SpawnRotation.Yaw = ci->WorldCharacterInfo[i].Yaw;
+				SpawnRotation.Pitch = ci->WorldCharacterInfo[i].Pitch;
+				SpawnRotation.Roll = ci->WorldCharacterInfo[i].Roll;
 
 				FActorSpawnParameters SpawnParams;
 				SpawnParams.Owner = this;
 				SpawnParams.Instigator = Instigator;
-				SpawnParams.Name = FName(*FString(to_string(ci->WorldCharacterInfo[i].sessionId).c_str()));
+				SpawnParams.Name = FName(*FString(to_string(ci->WorldCharacterInfo[i].SessionId).c_str()));
 
 				AJanghoWorldCharacter* const SpawnCharacter = world->SpawnActor<AJanghoWorldCharacter>(WhoToSpawn, SpawnLocation, SpawnRotation, SpawnParams);
 			}
 			// 해당되는 세션 아이디가 있으면 위치 동기화
 			else {
 				FVector CharacterLocation;
-				CharacterLocation.X = ci->WorldCharacterInfo[CharacterSessionId].x;
-				CharacterLocation.Y = ci->WorldCharacterInfo[CharacterSessionId].y;
-				CharacterLocation.Z = ci->WorldCharacterInfo[CharacterSessionId].z;
+				CharacterLocation.X = ci->WorldCharacterInfo[CharacterSessionId].X;
+				CharacterLocation.Y = ci->WorldCharacterInfo[CharacterSessionId].Y;
+				CharacterLocation.Z = ci->WorldCharacterInfo[CharacterSessionId].Z;
 
 				FRotator CharacterRotation;
-				CharacterRotation.Yaw = ci->WorldCharacterInfo[CharacterSessionId].yaw;
-				CharacterRotation.Pitch = ci->WorldCharacterInfo[CharacterSessionId].pitch;
-				CharacterRotation.Roll = ci->WorldCharacterInfo[CharacterSessionId].roll;
+				CharacterRotation.Yaw = ci->WorldCharacterInfo[CharacterSessionId].Yaw;
+				CharacterRotation.Pitch = ci->WorldCharacterInfo[CharacterSessionId].Pitch;
+				CharacterRotation.Roll = ci->WorldCharacterInfo[CharacterSessionId].Roll;
 
 				Actor->SetActorLocation(CharacterLocation);
 				Actor->SetActorRotation(CharacterRotation);
@@ -103,6 +106,11 @@ void AJanghoWorldGameMode::Tick(float DeltaTime){
 
 void AJanghoWorldGameMode::BeginPlay(){
 	Super::BeginPlay();
+}
+
+void AJanghoWorldGameMode::EndPlay(const EEndPlayReason::Type EndPlayReason){
+	Super::EndPlay(EndPlayReason);
+	Socket.LogoutCharacter(SessionId);
 }
 
 AActor* AJanghoWorldGameMode::FindActorBySessionId(TArray<AActor*> ActorArray, const int& SessionId)

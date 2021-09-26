@@ -126,8 +126,6 @@ void IOCompletionPort::StartServer(){
 			NULL
 		);
 
-		printf_s("[INFO] 클라이언트 접속 / 아이디 : %d \n", clientSocket);
-
 		if (nResult == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING){
 			printf_s("[ERROR] IO Pending 실패 : %d", WSAGetLastError());
 			return;
@@ -174,7 +172,7 @@ void IOCompletionPort::WorkerThread(){
 	DWORD	dwFlags = 0;
 
 	while (bWorkerThread){
-		/**
+		/*
 		 * 이 함수로 인해 쓰레드들은 WaitingThread Queue 에 대기상태로 들어가게 됨
 		 * 완료된 Overlapped I/O 작업이 발생하면 IOCP Queue 에서 완료된 작업을 가져와
 		 * 뒷처리를 함
@@ -213,7 +211,12 @@ void IOCompletionPort::WorkerThread(){
 			{
 				SyncCharacters(RecvStream, SendStream);
 			}
-		    break;
+			break;
+			case EPacketType::LOGOUT_CHARACTER:
+			{
+				LogoutCharacter(RecvStream);
+			}
+			break;
 			default:
 				break;
 			}
@@ -238,14 +241,11 @@ void IOCompletionPort::WorkerThread(){
 				printf_s("[ERROR] WSASend 실패 : ", WSAGetLastError());
 			}
 
-		//	printf_s("[INFO] 메시지 송신 - Bytes : [%d], Msg : [%s]\n",
-			//	pSocketInfo->dataBuf.len, pSocketInfo->dataBuf.buf);
-
 			// stSOCKETINFO 데이터 초기화
 			ZeroMemory(&(pSocketInfo->overlapped), sizeof(OVERLAPPED));
-			ZeroMemory(pSocketInfo->messageBuffer, MAX_BUFFER);
 			pSocketInfo->dataBuf.len = MAX_BUFFER;
 			pSocketInfo->dataBuf.buf = pSocketInfo->messageBuffer;
+			ZeroMemory(pSocketInfo->messageBuffer, MAX_BUFFER);
 			pSocketInfo->recvBytes = 0;
 			pSocketInfo->sendBytes = 0;
 
@@ -273,7 +273,7 @@ void IOCompletionPort::SyncCharacters(stringstream& RecvStream, stringstream& Se
 	cCharacter info;
 	RecvStream >> info;
 
-	printf_s("[클라이언트 ID : %d] 정보 수신 - X : [%f], Y : [%f], Z : [%f],Yaw : [%f], Pitch : [%f], Roll : [%f]\n",
+	printf_s("[클라이언트ID : %d] 정보 수신 - X : [%f], Y : [%f], Z : [%f],Yaw : [%f], Pitch : [%f], Roll : [%f]\n",
 		info.SessionId, info.X, info.Y, info.Z, info.Yaw, info.Pitch, info.Roll);
 
 	// 캐릭터의 위치를 저장						
@@ -287,4 +287,20 @@ void IOCompletionPort::SyncCharacters(stringstream& RecvStream, stringstream& Se
 
 	//직렬화
 	SendStream << CharactersInfo;
+}
+
+void IOCompletionPort::LogoutCharacter(stringstream& RecvStream)
+{
+	int SessionId;
+	RecvStream >> SessionId;
+	printf_s("[클라이언트ID : %d] 로그아웃 요청 수신\n", SessionId);
+
+	// CharactersInfo.WorldCharacterInfo[SessionId].SessionId = -1;
+	CharactersInfo.WorldCharacterInfo[SessionId].X = -1;
+	CharactersInfo.WorldCharacterInfo[SessionId].Y = -1;
+	CharactersInfo.WorldCharacterInfo[SessionId].Z = -1;
+	// 캐릭터의 회전값을 저장
+	CharactersInfo.WorldCharacterInfo[SessionId].Yaw = -1;
+	CharactersInfo.WorldCharacterInfo[SessionId].Pitch = -1;
+	CharactersInfo.WorldCharacterInfo[SessionId].Roll = -1;
 }

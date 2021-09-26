@@ -13,7 +13,8 @@ using namespace std;
 #define MAX_CLIENTS 100
 
 enum COMMONCLASS_API EPacketType{
-	SEND_CHARACTER
+	SEND_CHARACTER,
+	LOGOUT_CHARACTER
 };
 
 class COMMONCLASS_API cCharacter {
@@ -29,7 +30,7 @@ public:
 	float Pitch;
 	float Roll;
 
-	friend ostream& operator<<(ostream &stream, cCharacter& info){
+	friend ostream& operator<<(ostream& stream, cCharacter& info){
 		stream << info.SessionId << endl;
 		stream << info.X << endl;
 		stream << info.Y << endl;
@@ -61,14 +62,14 @@ public:
 
 	cCharacter WorldCharacterInfo[MAX_CLIENTS];
 
-	friend ostream& operator<<(ostream &stream, cCharactersInfo& info){
+	friend ostream& operator<<(ostream& stream, cCharactersInfo& info){
 		for (int i = 0; i < MAX_CLIENTS; i++){
 			stream << info.WorldCharacterInfo[i] << endl;
 		}
 		return stream;
 	}
 
-	friend istream &operator>>(istream &stream, cCharactersInfo& info){
+	friend istream &operator>>(istream& stream, cCharactersInfo& info){
 		for (int i = 0; i < MAX_CLIENTS; i++){
 			stream >> info.WorldCharacterInfo[i];
 		}

@@ -8,7 +8,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
-
+#include "Classes/Components/SphereComponent.h"
 //////////////////////////////////////////////////////////////////////////
 // AJanghoWorldCharacter
 
@@ -56,6 +56,8 @@ void AJanghoWorldCharacter::SetupPlayerInputComponent(class UInputComponent* Pla
 	check(PlayerInputComponent);
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+
+	PlayerInputComponent->BindAction("Hit", IE_Pressed, this, &AJanghoWorldCharacter::HitOtherCharacter);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &AJanghoWorldCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AJanghoWorldCharacter::MoveRight);
@@ -133,3 +135,7 @@ void AJanghoWorldCharacter::MoveRight(float Value)
 	}
 }
 
+void AJanghoWorldCharacter::HitOtherCharacter()
+{
+
+}

@@ -34,7 +34,10 @@ public:
 	// 작업 스레드
 	void WorkerThread();
 
+	//캐릭터 동기화
 	void SyncCharacters(stringstream& RecvStream, stringstream& SendStream);
+	//캐릭터 로그아웃
+	void LogoutCharacter(stringstream& RecvStream);
 
 private:
 	stSOCKETINFO *	pSocketInfo;		// 소켓 정보

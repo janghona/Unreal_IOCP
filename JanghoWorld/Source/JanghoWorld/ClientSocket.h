@@ -17,7 +17,8 @@ using namespace std;
 #define MAX_CLIENTS		100
 
 enum EPacketType{
-	SEND_CHARACTER
+	SEND_CHARACTER,
+	LOGOUT_CHARACTER
 };
 
 struct stSOCKETINFO{
@@ -31,37 +32,37 @@ struct stSOCKETINFO{
 
 class cCharacter {
 public:
-	int sessionId;
-	float x;
-	float y;
-	float z;
-	float yaw;
-	float pitch;
-	float roll;
+	int SessionId;
+	float X;
+	float Y;
+	float Z;
+	float Yaw;
+	float Pitch;
+	float Roll;
 
 	cCharacter() {};
 	~cCharacter() {};
 
 	friend ostream& operator<<(ostream &stream, cCharacter& info) {
-		stream << info.sessionId << endl;
-		stream << info.x << endl;
-		stream << info.y << endl;
-		stream << info.z << endl;
-		stream << info.yaw << endl;
-		stream << info.pitch << endl;
-		stream << info.roll << endl;
+		stream << info.SessionId << endl;
+		stream << info.X << endl;
+		stream << info.Y << endl;
+		stream << info.Z << endl;
+		stream << info.Yaw << endl;
+		stream << info.Pitch << endl;
+		stream << info.Roll << endl;
 
 		return stream;
 	}
 
 	friend istream& operator>>(istream &stream, cCharacter& info) {
-		stream >> info.sessionId;
-		stream >> info.x;
-		stream >> info.y;
-		stream >> info.z;
-		stream >> info.yaw;
-		stream >> info.pitch;
-		stream >> info.roll;
+		stream >> info.SessionId;
+		stream >> info.X;
+		stream >> info.Y;
+		stream >> info.Z;
+		stream >> info.Yaw;
+		stream >> info.Pitch;
+		stream >> info.Roll;
 		
 		return stream;
 	}
@@ -74,14 +75,14 @@ public:
 
 	cCharacter WorldCharacterInfo[MAX_CLIENTS];
 
-	friend ostream& operator<<(ostream &stream, cCharactersInfo& info) {
+	friend ostream& operator<<(ostream& stream, cCharactersInfo& info) {
 		for (int i = 0; i < MAX_CLIENTS; i++) {
 			stream << info.WorldCharacterInfo[i] << endl;
 		}
 		return stream;
 	}
 
-	friend istream &operator>>(istream &stream, cCharactersInfo& info)
+	friend istream &operator>>(istream& stream, cCharactersInfo& info)
 	{
 		for (int i = 0; i < MAX_CLIENTS; i++)
 		{
@@ -98,10 +99,14 @@ public:
 
 	bool InitSocket();
 	bool Connect(const char* pszIP, int nPort);
+	
+	//캐릭터 동기화
 	cCharactersInfo* SyncCharacters(cCharacter& info);
+	//캐릭터 로그아웃
+	void LogoutCharacter(int SessionId);
 
 private:
-	SOCKET serverSocket;
+	SOCKET ServerSocket;
 	char recvBuffer[MAX_BUFFER];
 	cCharactersInfo CharactersInfo;
 };

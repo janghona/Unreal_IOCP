@@ -34,8 +34,10 @@ public:
 	// 작업 스레드
 	void WorkerThread();
 
+	void Send(stSOCKETINFO* pSocket);
+
 	//캐릭터 동기화
-	void SyncCharacters(stringstream& RecvStream, stringstream& SendStream);
+	void SyncCharacters(stringstream& RecvStream, stSOCKETINFO* pSocket);
 	//캐릭터 로그아웃
 	void LogoutCharacter(stringstream& RecvStream);
 
@@ -47,4 +49,5 @@ private:
 	bool			bWorkerThread;	// 작업 스레드 동작 플래그
 	HANDLE *		hWorkerHandle;	// 작업 스레드 핸들
 	cCharactersInfo CharactersInfo; // 모든 클라이언트 정보 저장
+	map<int, SOCKET> SessionSocket;
 };

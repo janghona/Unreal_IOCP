@@ -4,6 +4,7 @@
 #include "JanghoWorldCharacter.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Kismet/GameplayStatics.h"
+#include "Blueprint/UserWidget.h"
 #include<string>
 
 AJanghoWorldGameMode::AJanghoWorldGameMode()
@@ -21,10 +22,12 @@ AJanghoWorldGameMode::AJanghoWorldGameMode()
 	SessionId = FMath::RandRange(0,100);
 
 	// server 소켓 연결
-	Socket.InitSocket();
-	bIsConnected = Socket.Connect("127.0.0.1", 8000);
+	Socket = ClientSocket::GetSingleton();
+	Socket->InitSocket();
+	bIsConnected = Socket->Connect("127.0.0.1", 8000);
 	if (bIsConnected) {
 		UE_LOG(LogClass, Log, TEXT("IOCP Server connect success!"));
+		Socket->SetGameMode(this);
 	}
 }
 
@@ -50,8 +53,8 @@ void AJanghoWorldGameMode::Tick(float DeltaTime){
 	Character.Roll = MyRotation.Roll;
 
 	// 플레이어의 세션 아이디와 위치를 서버에게 보냄
-	cCharactersInfo* ci = Socket.SyncCharacters(Character);
-	if (ci == nullptr) return;
+	Socket->SendCharacterInfo(Character);
+
 	UWorld* const world = GetWorld();
 	if (world == nullptr) return;
 
@@ -106,11 +109,16 @@ void AJanghoWorldGameMode::Tick(float DeltaTime){
 
 void AJanghoWorldGameMode::BeginPlay(){
 	Super::BeginPlay();
+
+	// Recv 스레드 시작
+	Socket->StartListen();
 }
 
 void AJanghoWorldGameMode::EndPlay(const EEndPlayReason::Type EndPlayReason){
 	Super::EndPlay(EndPlayReason);
-	Socket.LogoutCharacter(SessionId);
+	Socket->LogoutCharacter(SessionId);
+	Socket->CloseSocket();
+	Socket->StopListen();
 }
 
 AActor* AJanghoWorldGameMode::FindActorBySessionId(TArray<AActor*> ActorArray, const int& SessionId)
@@ -120,4 +128,9 @@ AActor* AJanghoWorldGameMode::FindActorBySessionId(TArray<AActor*> ActorArray, c
 			return Actor;
 	}
 	return nullptr;
+}
+
+void AJanghoWorldGameMode::SyncCharactersInfo(cCharactersInfo * ci_)
+{
+	ci = ci_;
 }

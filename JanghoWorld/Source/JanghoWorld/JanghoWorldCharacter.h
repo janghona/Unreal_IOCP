@@ -29,6 +29,22 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)
 	float BaseLookUpRate;
 
+	// 체력
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Properties")
+		float HealthValue;
+
+	// 마나
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Properties")
+		float ManaValue;
+
+	// 체력 업데이트
+	UFUNCTION(BlueprintCallable, Category = "Properties")
+		void UpdateHealth(float HealthChange);
+
+	// 체력 가져오기
+	UFUNCTION(BlueprintPure, Category = "Properties")
+		float GetHealth();
+
 protected:
 
 	/** Resets HMD orientation in VR. */

@@ -9,7 +9,10 @@
 #include <WinSock2.h>
 #include<map>
 #include<iostream>
+#include "Runtime/Core/Public/HAL/Runnable.h"
 using namespace std;
+
+class AJanghoWorldGameMode;
 
 #define	MAX_BUFFER		4096
 #define SERVER_PORT		8000
@@ -18,6 +21,7 @@ using namespace std;
 
 enum EPacketType{
 	SEND_CHARACTER,
+	RECV_CHARACTER,
 	LOGOUT_CHARACTER
 };
 
@@ -92,21 +96,49 @@ public:
 	}
 };
 
-class JANGHOWORLD_API ClientSocket{
+class JANGHOWORLD_API ClientSocket : public FRunnable
+{
 public:
 	ClientSocket();
-	~ClientSocket();
+	virtual ~ClientSocket();
 
 	bool InitSocket();
 	bool Connect(const char* pszIP, int nPort);
 	
-	//캐릭터 동기화
-	cCharactersInfo* SyncCharacters(cCharacter& info);
+	//캐릭터 Send / Recv
+	void SendCharacterInfo(cCharacter& info);
+	cCharactersInfo* RecvCharacterInfo(stringstream& RecvStream);
+
 	//캐릭터 로그아웃
 	void LogoutCharacter(int SessionId);
 
+	// 소켓이 속한 게임모드를 세팅해주는 함수
+	void SetGameMode(AJanghoWorldGameMode* pGameMode);
+
+	void CloseSocket();
+
+	// FRunnable Thread members	
+	FRunnableThread* Thread;
+	FThreadSafeCounter StopTaskCounter;
+
+	// FRunnable override 함수
+	virtual bool Init();
+	virtual uint32 Run();
+	virtual void Stop();
+	virtual void Exit();
+
+	// 스레드 시작 및 종료
+	bool StartListen();
+	void StopListen();
+
+	// 싱글턴 객체 가져오기
+	static ClientSocket* GetSingleton(){
+		static ClientSocket ins;
+		return &ins;
+	}
 private:
 	SOCKET ServerSocket;
 	char recvBuffer[MAX_BUFFER];
 	cCharactersInfo CharactersInfo;
+	AJanghoWorldGameMode* GameMode;	// 게임모드 정보
 };

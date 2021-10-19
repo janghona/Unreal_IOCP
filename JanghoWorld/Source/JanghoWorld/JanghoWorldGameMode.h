@@ -20,13 +20,17 @@ public:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	AActor* FindActorBySessionId(TArray<AActor*> ActorArray, const int& SessionId);
+
 	// 스폰시킬 다른 캐릭터
 	UPROPERTY(EditAnywhere, Category = "Spawning")
 	TSubclassOf<class AJanghoWorldCharacter> WhoToSpawn;
+
+	void SyncCharactersInfo(cCharactersInfo * ci);
 private:
-	ClientSocket Socket;
+	ClientSocket* Socket;
 	bool bIsConnected;
 	int SessionId;  // 캐릭터 세션 아이디(랜덤값1~100)
+	cCharactersInfo * ci;
 };
 
 

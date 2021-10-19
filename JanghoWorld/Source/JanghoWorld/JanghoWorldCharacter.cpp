@@ -45,6 +45,9 @@ AJanghoWorldCharacter::AJanghoWorldCharacter()
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
+
+	HealthValue = 0.5f;
+	ManaValue = 0.5f;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -138,4 +141,14 @@ void AJanghoWorldCharacter::MoveRight(float Value)
 void AJanghoWorldCharacter::HitOtherCharacter()
 {
 
+}
+
+void AJanghoWorldCharacter::UpdateHealth(float HealthChange)
+{
+	HealthValue += HealthChange;
+}
+
+float AJanghoWorldCharacter::GetHealth()
+{
+	return HealthValue;
 }

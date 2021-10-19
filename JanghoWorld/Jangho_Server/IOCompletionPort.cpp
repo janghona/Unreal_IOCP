@@ -201,7 +201,6 @@ void IOCompletionPort::WorkerThread(){
 		else{
 			int PacketType;
 			stringstream RecvStream;
-			stringstream SendStream;
 		
 			RecvStream << pSocketInfo->dataBuf.buf;
 			RecvStream >> PacketType;
@@ -209,7 +208,7 @@ void IOCompletionPort::WorkerThread(){
 			switch (PacketType){
 			case EPacketType::SEND_CHARACTER: 
 			{
-				SyncCharacters(RecvStream, SendStream);
+				SyncCharacters(RecvStream, pSocketInfo);
 			}
 			break;
 			case EPacketType::LOGOUT_CHARACTER:
@@ -220,58 +219,60 @@ void IOCompletionPort::WorkerThread(){
 			default:
 				break;
 			}
-
-			// !!! 중요 !!! data.buf 에다 직접 데이터를 쓰면 쓰레기값이 전달될 수 있음
-			CopyMemory(pSocketInfo->messageBuffer, (CHAR*)SendStream.str().c_str(), SendStream.str().length());
-			pSocketInfo->dataBuf.buf = pSocketInfo->messageBuffer;
-			pSocketInfo->dataBuf.len = SendStream.str().length();
-
-			// 다른 클라이언트 정보 송신			
-			nResult = WSASend(
-				pSocketInfo->socket,
-				&(pSocketInfo->dataBuf),
-				1,
-				&sendBytes,
-				dwFlags,
-				NULL,
-				NULL
-			);
-
-			if (nResult == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING){
-				printf_s("[ERROR] WSASend 실패 : ", WSAGetLastError());
-			}
-
-			// stSOCKETINFO 데이터 초기화
-			ZeroMemory(&(pSocketInfo->overlapped), sizeof(OVERLAPPED));
-			pSocketInfo->dataBuf.len = MAX_BUFFER;
-			pSocketInfo->dataBuf.buf = pSocketInfo->messageBuffer;
-			ZeroMemory(pSocketInfo->messageBuffer, MAX_BUFFER);
-			pSocketInfo->recvBytes = 0;
-			pSocketInfo->sendBytes = 0;
-
-			dwFlags = 0;
-
-			// 클라이언트로부터 다시 응답을 받기 위해 WSARecv 를 호출해줌
-			nResult = WSARecv(
-				pSocketInfo->socket,
-				&(pSocketInfo->dataBuf),
-				1,
-				&recvBytes,
-				&dwFlags,
-				(LPWSAOVERLAPPED)&(pSocketInfo->overlapped),
-				NULL
-			);
-
-			if (nResult == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING){
-				printf_s("[ERROR] WSARecv 실패 : ", WSAGetLastError());
-			}
+			Send(pSocketInfo);
 		}
 	}
 }
 
-void IOCompletionPort::SyncCharacters(stringstream& RecvStream, stringstream& SendStream) {
+void IOCompletionPort::Send(stSOCKETINFO * pSocket){
+	int nResult;
+	DWORD	sendBytes;
+	DWORD	dwFlags = 0;
+
+	nResult = WSASend(
+		pSocket->socket,
+		&(pSocket->dataBuf),
+		1,
+		&sendBytes,
+		dwFlags,
+		NULL,
+		NULL
+	);
+
+	if (nResult == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING){
+		printf_s("[ERROR] WSASend 실패 : ", WSAGetLastError());
+	}
+
+	// stSOCKETINFO 데이터 초기화
+	ZeroMemory(&(pSocket->overlapped), sizeof(OVERLAPPED));
+	ZeroMemory(pSocket->messageBuffer, MAX_BUFFER);
+	pSocket->dataBuf.len = MAX_BUFFER;
+	pSocket->dataBuf.buf = pSocket->messageBuffer;
+	pSocket->recvBytes = 0;
+	pSocket->sendBytes = 0;
+
+	dwFlags = 0;
+
+	// 클라이언트로부터 다시 응답을 받기 위해 WSARecv 를 호출해줌
+	nResult = WSARecv(
+		pSocket->socket,
+		&(pSocket->dataBuf),
+		1,
+		(LPDWORD)&pSocket,
+		&dwFlags,
+		(LPWSAOVERLAPPED)&(pSocket->overlapped),
+		NULL
+	);
+
+	if (nResult == SOCKET_ERROR && WSAGetLastError() != WSA_IO_PENDING){
+		printf_s("[ERROR] WSARecv 실패 : ", WSAGetLastError());
+	}
+}
+
+void IOCompletionPort::SyncCharacters(stringstream& RecvStream, stSOCKETINFO* pSocket) {
 	cCharacter info;
 	RecvStream >> info;
+	stringstream SendStream;
 
 	printf_s("[클라이언트ID : %d] 정보 수신 - X : [%f], Y : [%f], Z : [%f],Yaw : [%f], Pitch : [%f], Roll : [%f]\n",
 		info.SessionId, info.X, info.Y, info.Z, info.Yaw, info.Pitch, info.Roll);
@@ -285,8 +286,17 @@ void IOCompletionPort::SyncCharacters(stringstream& RecvStream, stringstream& Se
 	CharactersInfo.WorldCharacterInfo[info.SessionId].Pitch = info.Pitch;
 	CharactersInfo.WorldCharacterInfo[info.SessionId].Roll = info.Roll;
 
+	// 세션 소켓 업데이트
+	SessionSocket[info.SessionId] = pSocket->socket;
+
 	//직렬화
-	SendStream << CharactersInfo;
+	SendStream << EPacketType::RECV_CHARACTER << endl;
+	SendStream << CharactersInfo << endl;
+
+	// !!! 중요 !!! data.buf 에다 직접 데이터를 쓰면 쓰레기값이 전달될 수 있음
+	CopyMemory(pSocket->messageBuffer, (CHAR*)SendStream.str().c_str(), SendStream.str().length());
+	pSocket->dataBuf.buf = pSocket->messageBuffer;
+	pSocket->dataBuf.len = SendStream.str().length();
 }
 
 void IOCompletionPort::LogoutCharacter(stringstream& RecvStream)

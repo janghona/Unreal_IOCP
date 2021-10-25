@@ -18,6 +18,7 @@ IOCompletionPort::IOCompletionPort(){
 		CharactersInfo.WorldCharacterInfo[i].X = -1;
 		CharactersInfo.WorldCharacterInfo[i].Y = -1;
 		CharactersInfo.WorldCharacterInfo[i].Z = -1;
+		CharactersInfo.WorldCharacterInfo[i].IsAlive = false;
 	}
 }
 
@@ -206,6 +207,11 @@ void IOCompletionPort::WorkerThread(){
 			RecvStream >> PacketType;
 
 			switch (PacketType){
+			case EPacketType::ENROLL_CHARACTER:
+			{
+				EnrollCharacter(RecvStream, pSocketInfo);
+			}
+			break;
 			case EPacketType::SEND_CHARACTER: 
 			{
 				SyncCharacters(RecvStream, pSocketInfo);
@@ -213,7 +219,7 @@ void IOCompletionPort::WorkerThread(){
 			break;
 			case EPacketType::LOGOUT_CHARACTER:
 			{
-				LogoutCharacter(RecvStream);
+				LogoutCharacter(RecvStream,pSocketInfo);
 			}
 			break;
 			default:
@@ -269,12 +275,11 @@ void IOCompletionPort::Send(stSOCKETINFO * pSocket){
 	}
 }
 
-void IOCompletionPort::SyncCharacters(stringstream& RecvStream, stSOCKETINFO* pSocket) {
+void IOCompletionPort::EnrollCharacter(stringstream& RecvStream, stSOCKETINFO* pSocket) {
 	cCharacter info;
 	RecvStream >> info;
-	stringstream SendStream;
 
-	printf_s("[클라이언트ID : %d] 정보 수신 - X : [%f], Y : [%f], Z : [%f],Yaw : [%f], Pitch : [%f], Roll : [%f]\n",
+	printf_s("[클라이언트ID : %d] 캐릭터등록 - X : [%f], Y : [%f], Z : [%f],Yaw : [%f], Pitch : [%f], Roll : [%f]\n",
 		info.SessionId, info.X, info.Y, info.Z, info.Yaw, info.Pitch, info.Roll);
 
 	// 캐릭터의 위치를 저장						
@@ -285,11 +290,44 @@ void IOCompletionPort::SyncCharacters(stringstream& RecvStream, stSOCKETINFO* pS
 	CharactersInfo.WorldCharacterInfo[info.SessionId].Yaw = info.Yaw;
 	CharactersInfo.WorldCharacterInfo[info.SessionId].Pitch = info.Pitch;
 	CharactersInfo.WorldCharacterInfo[info.SessionId].Roll = info.Roll;
+	// 캐릭터 속성
+	CharactersInfo.WorldCharacterInfo[info.SessionId].IsAlive = info.IsAlive;
+	CharactersInfo.WorldCharacterInfo[info.SessionId].HealthValue = info.HealthValue;
+}
 
-	// 세션 소켓 업데이트
-	SessionSocket[info.SessionId] = pSocket->socket;
+void IOCompletionPort::SyncCharacters(stringstream& RecvStream, stSOCKETINFO* pSocket)
+{
+	cCharacter info;
+	RecvStream >> info;
 
-	//직렬화
+	// 캐릭터의 위치를 저장						
+	CharactersInfo.WorldCharacterInfo[info.SessionId].SessionId = info.SessionId;
+	CharactersInfo.WorldCharacterInfo[info.SessionId].X = info.X;
+	CharactersInfo.WorldCharacterInfo[info.SessionId].Y = info.Y;
+	CharactersInfo.WorldCharacterInfo[info.SessionId].Z = info.Z;
+	CharactersInfo.WorldCharacterInfo[info.SessionId].Yaw = info.Yaw;
+	CharactersInfo.WorldCharacterInfo[info.SessionId].Pitch = info.Pitch;
+	CharactersInfo.WorldCharacterInfo[info.SessionId].Roll = info.Roll;
+
+	WriteCharactersInfoToSocket(pSocket);
+}
+
+void IOCompletionPort::LogoutCharacter(stringstream& RecvStream,stSOCKETINFO* pSocket)
+{
+	int SessionId;
+	RecvStream >> SessionId;
+	printf_s("[클라이언트ID : %d] 로그아웃 요청 수신\n", SessionId);
+
+	CharactersInfo.WorldCharacterInfo[SessionId].IsAlive = false;
+
+	WriteCharactersInfoToSocket(pSocket);
+}
+
+void IOCompletionPort::WriteCharactersInfoToSocket(stSOCKETINFO * pSocket)
+{
+	stringstream SendStream;
+
+	// 직렬화	
 	SendStream << EPacketType::RECV_CHARACTER << endl;
 	SendStream << CharactersInfo << endl;
 
@@ -297,20 +335,4 @@ void IOCompletionPort::SyncCharacters(stringstream& RecvStream, stSOCKETINFO* pS
 	CopyMemory(pSocket->messageBuffer, (CHAR*)SendStream.str().c_str(), SendStream.str().length());
 	pSocket->dataBuf.buf = pSocket->messageBuffer;
 	pSocket->dataBuf.len = SendStream.str().length();
-}
-
-void IOCompletionPort::LogoutCharacter(stringstream& RecvStream)
-{
-	int SessionId;
-	RecvStream >> SessionId;
-	printf_s("[클라이언트ID : %d] 로그아웃 요청 수신\n", SessionId);
-
-	// CharactersInfo.WorldCharacterInfo[SessionId].SessionId = -1;
-	CharactersInfo.WorldCharacterInfo[SessionId].X = -1;
-	CharactersInfo.WorldCharacterInfo[SessionId].Y = -1;
-	CharactersInfo.WorldCharacterInfo[SessionId].Z = -1;
-	// 캐릭터의 회전값을 저장
-	CharactersInfo.WorldCharacterInfo[SessionId].Yaw = -1;
-	CharactersInfo.WorldCharacterInfo[SessionId].Pitch = -1;
-	CharactersInfo.WorldCharacterInfo[SessionId].Roll = -1;
 }

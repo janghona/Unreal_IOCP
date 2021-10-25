@@ -36,10 +36,14 @@ public:
 
 	void Send(stSOCKETINFO* pSocket);
 
+	// 캐릭터 초기 등록
+	void EnrollCharacter(stringstream& RecvStream, stSOCKETINFO* pSocket);
 	//캐릭터 동기화
 	void SyncCharacters(stringstream& RecvStream, stSOCKETINFO* pSocket);
 	//캐릭터 로그아웃
-	void LogoutCharacter(stringstream& RecvStream);
+	void LogoutCharacter(stringstream& RecvStream, stSOCKETINFO* pSocket);
+
+	void WriteCharactersInfoToSocket(stSOCKETINFO* pSocket);
 
 private:
 	stSOCKETINFO *	pSocketInfo;		// 소켓 정보

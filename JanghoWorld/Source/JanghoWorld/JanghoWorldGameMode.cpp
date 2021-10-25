@@ -31,10 +31,17 @@ AJanghoWorldGameMode::AJanghoWorldGameMode()
 	}
 }
 
-void AJanghoWorldGameMode::Tick(float DeltaTime){
+void AJanghoWorldGameMode::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
 
 	if (!bIsConnected) return;
+
+	if (!SendPlayerInfo()) return;
+
+	if (!SynchronizeWorld()) return;
+}
+void AJanghoWorldGameMode::BeginPlay() {
+	Super::BeginPlay();
 
 	auto Player = Cast<AJanghoWorldCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
 	if (!Player) return;
@@ -51,12 +58,66 @@ void AJanghoWorldGameMode::Tick(float DeltaTime){
 	Character.Yaw = MyRotation.Yaw;
 	Character.Pitch = MyRotation.Pitch;
 	Character.Roll = MyRotation.Roll;
+	// 속성
+	Character.IsAlive = true;
+	Character.HealthValue = Player->GetHealth();
+	Socket->EnrollCharacterInfo(Character);
 
-	// 플레이어의 세션 아이디와 위치를 서버에게 보냄
+	// Recv 스레드 시작
+	Socket->StartListen();
+}
+
+void AJanghoWorldGameMode::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+	Socket->LogoutCharacter(SessionId);
+	Socket->CloseSocket();
+	Socket->StopListen();
+}
+
+AActor * AJanghoWorldGameMode::FindActorBySessionId(TArray<AActor*> ActorArray, const int & SessionId)
+{
+	for (const auto& Actor : ActorArray)
+	{
+		if (stoi(*Actor->GetName()) == SessionId)
+			return Actor;
+	}
+	return nullptr;
+}
+
+void AJanghoWorldGameMode::SyncCharactersInfo(cCharactersInfo * ci_)
+{
+	ci = ci_;
+}
+
+
+bool AJanghoWorldGameMode::SendPlayerInfo() 
+{
+	auto Player = Cast<AJanghoWorldCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
+	if (!Player) return false;
+
+	//플레이어 위치, 회전 가져옴
+	auto MyLocation = Player->GetActorLocation();
+	auto MyRotation = Player->GetActorRotation();
+
+	cCharacter Character;
+	Character.SessionId = SessionId;
+	Character.X = MyLocation.X;
+	Character.Y = MyLocation.Y;
+	Character.Z = MyLocation.Z;
+	Character.Yaw = MyRotation.Yaw;
+	Character.Pitch = MyRotation.Pitch;
+	Character.Roll = MyRotation.Roll;
+	
 	Socket->SendCharacterInfo(Character);
 
+	return true;
+}
+
+bool AJanghoWorldGameMode::SynchronizeWorld()
+{
 	UWorld* const world = GetWorld();
-	if (world == nullptr) return;
+	if (world == nullptr) return false;
 
 	//월드 내 캐릭터들 수집
 	TArray<AActor*> SpawnedCharacters;
@@ -64,12 +125,18 @@ void AJanghoWorldGameMode::Tick(float DeltaTime){
 
 	for (int i = 0; i < MAX_CLIENTS; i++) {
 		int CharacterSessionId = ci->WorldCharacterInfo[i].SessionId;
-		// 유효한 세션 아이디면서 플레이어의 세션아이디가 아닐때
-		if (CharacterSessionId != -1 && CharacterSessionId != SessionId && ci->WorldCharacterInfo[i].X != -1) {
+		// 플레이어 처리
+		if (CharacterSessionId == SessionId){
+			SynchronizePlayer(ci->WorldCharacterInfo[i]);
+			continue;
+		}
+		// 다른 네트워크 캐릭터 처리
+		if (CharacterSessionId != -1)
+		{
 			// 월드내 해당 세션 아이디와 매칭되는 Actor 검색			
 			auto Actor = FindActorBySessionId(SpawnedCharacters, CharacterSessionId);
 			// 해당되는 세션 아이디가 없을 시 월드에 스폰
-			if (Actor == nullptr) {
+			if (Actor == nullptr && ci->WorldCharacterInfo[i].IsAlive == true) {
 				FVector SpawnLocation;
 				SpawnLocation.X = ci->WorldCharacterInfo[i].X;
 				SpawnLocation.Y = ci->WorldCharacterInfo[i].Y;
@@ -88,7 +155,8 @@ void AJanghoWorldGameMode::Tick(float DeltaTime){
 				AJanghoWorldCharacter* const SpawnCharacter = world->SpawnActor<AJanghoWorldCharacter>(WhoToSpawn, SpawnLocation, SpawnRotation, SpawnParams);
 			}
 			// 해당되는 세션 아이디가 있으면 위치 동기화
-			else {
+			else if (Actor != nullptr && ci->WorldCharacterInfo[i].IsAlive == true) 
+			{
 				FVector CharacterLocation;
 				CharacterLocation.X = ci->WorldCharacterInfo[CharacterSessionId].X;
 				CharacterLocation.Y = ci->WorldCharacterInfo[CharacterSessionId].Y;
@@ -102,35 +170,33 @@ void AJanghoWorldGameMode::Tick(float DeltaTime){
 				Actor->SetActorLocation(CharacterLocation);
 				Actor->SetActorRotation(CharacterRotation);
 			}
+			else if (Actor != nullptr && ci->WorldCharacterInfo[i].IsAlive == false)
+			{
+				UE_LOG(LogClass, Log, TEXT("Destroy Actor"));
+				FTransform transform(Actor->GetActorLocation());
+				UGameplayStatics::SpawnEmitterAtLocation(world, DestroyEmiiter, transform, true);
+				Actor->Destroy();
+			}
 		}
 	}
-	
+	return true;
 }
 
-void AJanghoWorldGameMode::BeginPlay(){
-	Super::BeginPlay();
-
-	// Recv 스레드 시작
-	Socket->StartListen();
-}
-
-void AJanghoWorldGameMode::EndPlay(const EEndPlayReason::Type EndPlayReason){
-	Super::EndPlay(EndPlayReason);
-	Socket->LogoutCharacter(SessionId);
-	Socket->CloseSocket();
-	Socket->StopListen();
-}
-
-AActor* AJanghoWorldGameMode::FindActorBySessionId(TArray<AActor*> ActorArray, const int& SessionId)
+void AJanghoWorldGameMode::SynchronizePlayer(const cCharacter & info)
 {
-	for (const auto& Actor : ActorArray){
-		if (stoi(*Actor->GetName()) == SessionId)
-			return Actor;
+	auto Player = Cast<AJanghoWorldCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
+	UWorld* const world = GetWorld();
+
+	if (!info.IsAlive) {
+		FTransform transform(Player->GetActorLocation());
+		UGameplayStatics::SpawnEmitterAtLocation(world, DestroyEmiiter, transform, true);
+		Player->Destroy();
 	}
-	return nullptr;
-}
 
-void AJanghoWorldGameMode::SyncCharactersInfo(cCharactersInfo * ci_)
-{
-	ci = ci_;
+	 //캐릭터 속성 업데이트
+	if (Player->HealthValue != info.HealthValue) {
+		FTransform transform(Player->GetActorLocation());
+		UGameplayStatics::SpawnEmitterAtLocation(world, HitEmiiter, transform, true);
+	}
+	Player->HealthValue = info.HealthValue;
 }

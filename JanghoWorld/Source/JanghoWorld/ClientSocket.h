@@ -20,6 +20,7 @@ class AJanghoWorldGameMode;
 #define MAX_CLIENTS		100
 
 enum EPacketType{
+	ENROLL_CHARACTER,
 	SEND_CHARACTER,
 	RECV_CHARACTER,
 	LOGOUT_CHARACTER
@@ -43,6 +44,10 @@ public:
 	float Yaw;
 	float Pitch;
 	float Roll;
+	// 속성
+	bool	IsAlive;
+	bool	IsJumping;
+	float	HealthValue;
 
 	cCharacter() {};
 	~cCharacter() {};
@@ -55,6 +60,9 @@ public:
 		stream << info.Yaw << endl;
 		stream << info.Pitch << endl;
 		stream << info.Roll << endl;
+		stream << info.IsAlive << endl;
+		stream << info.IsJumping << endl;
+		stream << info.HealthValue << endl;
 
 		return stream;
 	}
@@ -67,6 +75,9 @@ public:
 		stream >> info.Yaw;
 		stream >> info.Pitch;
 		stream >> info.Roll;
+		stream >> info.IsAlive;
+		stream >> info.IsJumping;
+		stream >> info.HealthValue;
 		
 		return stream;
 	}
@@ -105,6 +116,8 @@ public:
 	bool InitSocket();
 	bool Connect(const char* pszIP, int nPort);
 	
+	// 초기 캐릭터 등록
+	void EnrollCharacterInfo(cCharacter& info);
 	//캐릭터 Send / Recv
 	void SendCharacterInfo(cCharacter& info);
 	cCharactersInfo* RecvCharacterInfo(stringstream& RecvStream);

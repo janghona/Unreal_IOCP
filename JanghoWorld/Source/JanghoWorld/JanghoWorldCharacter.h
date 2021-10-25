@@ -45,6 +45,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Properties")
 		float GetHealth();
 
+	//생존여부
+	UFUNCTION(BlueprintPure, Category = "Properties")
+		bool IsAlive();
+
 protected:
 
 	/** Resets HMD orientation in VR. */
@@ -85,5 +89,6 @@ public:
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 protected:
 	void HitOtherCharacter();
+	bool bIsAlive;
 };
 

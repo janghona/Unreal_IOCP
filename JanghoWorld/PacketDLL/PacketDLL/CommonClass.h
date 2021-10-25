@@ -13,6 +13,7 @@ using namespace std;
 #define MAX_CLIENTS 100
 
 enum COMMONCLASS_API EPacketType{
+	ENROLL_CHARACTER,
 	SEND_CHARACTER,
 	RECV_CHARACTER,
 	LOGOUT_CHARACTER
@@ -30,6 +31,10 @@ public:
 	float Yaw;
 	float Pitch;
 	float Roll;
+	// ¼Ó¼º
+	bool	IsAlive;
+	bool	IsJumping;
+	float	HealthValue;
 
 	friend ostream& operator<<(ostream& stream, cCharacter& info){
 		stream << info.SessionId << endl;
@@ -39,6 +44,9 @@ public:
 		stream << info.Yaw << endl;
 		stream << info.Pitch << endl;
 		stream << info.Roll << endl;
+		stream << info.IsAlive << endl;
+		stream << info.IsJumping << endl;
+		stream << info.HealthValue << endl;
 
 		return stream;
 	}
@@ -51,6 +59,9 @@ public:
 		stream >> info.Yaw;
 		stream >> info.Pitch;
 		stream >> info.Roll;
+		stream >> info.IsAlive;
+		stream >> info.IsJumping;
+		stream >> info.HealthValue;
 
 		return stream;
 	}

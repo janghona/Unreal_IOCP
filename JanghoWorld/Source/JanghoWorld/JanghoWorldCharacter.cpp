@@ -9,6 +9,8 @@
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Classes/Components/SphereComponent.h"
+#include "Engine/World.h"
+#include "JanghoWorldGameMode.h"
 //////////////////////////////////////////////////////////////////////////
 // AJanghoWorldCharacter
 
@@ -48,6 +50,7 @@ AJanghoWorldCharacter::AJanghoWorldCharacter()
 
 	HealthValue = 0.5f;
 	ManaValue = 0.5f;
+	bIsAlive = true;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -151,4 +154,9 @@ void AJanghoWorldCharacter::UpdateHealth(float HealthChange)
 float AJanghoWorldCharacter::GetHealth()
 {
 	return HealthValue;
+}
+
+bool AJanghoWorldCharacter::IsAlive()
+{
+	return bIsAlive;
 }

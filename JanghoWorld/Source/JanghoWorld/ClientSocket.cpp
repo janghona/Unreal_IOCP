@@ -51,6 +51,21 @@ bool ClientSocket::Connect(const char * pszIP, int nPort){
 	return true;
 }
 
+void ClientSocket::EnrollCharacterInfo(cCharacter & info)
+{
+	// 캐릭터 정보 직렬화
+	stringstream SendStream;
+	// 요청 종류
+	SendStream << EPacketType::ENROLL_CHARACTER << endl;;
+	SendStream << info;
+
+	// 캐릭터 정보 전송
+	int nSendLen = send(ServerSocket, (CHAR*)SendStream.str().c_str(), SendStream.str().length(), 0);
+	if (nSendLen == -1){
+		return;
+	}
+}
+
 void ClientSocket::SendCharacterInfo(cCharacter& info){
 	stringstream SendStream;
 	// 요청 종류
@@ -63,7 +78,7 @@ void ClientSocket::SendCharacterInfo(cCharacter& info){
 	}
 }
 
-cCharactersInfo * ClientSocket::RecvCharacterInfo(stringstream & RecvStream){
+cCharactersInfo* ClientSocket::RecvCharacterInfo(stringstream & RecvStream){
 	RecvStream >> CharactersInfo;
 	return &CharactersInfo;
 }
@@ -149,6 +164,7 @@ void ClientSocket::StopListen()
 	// 스레드 종료
 	Stop();
 	Thread->WaitForCompletion();
+	Thread->Kill();
 	delete Thread;
 	Thread = nullptr;
 	StopTaskCounter.Reset();
